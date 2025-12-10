@@ -1,0 +1,328 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert,
+  InputAdornment,
+  IconButton,
+} from '@mui/material';
+import {
+  Email as EmailIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+
+export default function Login() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleChange = (field) => (event) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    const result = await login(formData.email, formData.password);
+    setLoading(false);
+
+    if (result.success) {
+      toast.success('Welcome back! 🎉');
+      navigate('/dashboard');
+    } else {
+      setError(result.message);
+      toast.error(result.message);
+    }
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-primary)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'var(--bg-secondary)',
+          opacity: 0.1,
+        },
+      }}
+    >
+      <Container component="main" maxWidth="sm">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+          }}
+        >
+          {/* Logo/Brand Section */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                mb: 1,
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              }}
+            >
+              💎 LuxeHub
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'var(--text-secondary)',
+                fontWeight: 500,
+              }}
+            >
+              Your Premium Business Automation Platform
+            </Typography>
+          </Box>
+
+          <Paper
+            elevation={12}
+            sx={{
+              p: 5,
+              width: '100%',
+              backgroundColor: 'var(--bg-secondary)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: 4,
+              border: '1px solid var(--border-color)',
+              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Typography
+              component="h1"
+              variant="h4"
+              align="center"
+              gutterBottom
+              sx={{
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                mb: 2,
+              }}
+            >
+              🔐 Welcome Back
+            </Typography>
+            <Typography
+              variant="body1"
+              align="center"
+              sx={{
+                mb: 4,
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Sign in to your account to continue
+            </Typography>
+
+            {error && (
+              <Alert
+                severity="error"
+                sx={{
+                  mt: 2,
+                  mb: 3,
+                  borderRadius: 2,
+                  border: '1px solid #F2C6DE',
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                type="email"
+                value={formData.email}
+                onChange={handleChange('email')}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: 'var(--accent)' }} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    backgroundColor: 'var(--bg-primary)',
+                    borderRadius: 2,
+                    border: '1px solid var(--border-color)',
+                    padding: '8px 12px',
+                    margin: '8px 0',
+                    '&:hover': {
+                      backgroundColor: 'var(--bg-primary)',
+                      borderColor: 'var(--accent)',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'var(--bg-primary)',
+                      borderColor: 'var(--accent)',
+                      boxShadow: '0 0 0 2px rgba(16, 163, 127, 0.2)',
+                    },
+                  },
+                }}
+                InputLabelProps={{
+                  sx: {
+                    color: 'var(--text-secondary)',
+                    '&.Mui-focused': {
+                      color: 'var(--accent)',
+                    },
+                  },
+                }}
+                sx={{ mb: 3, mt: 2 }}
+              />
+
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                value={formData.password}
+                onChange={handleChange('password')}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                        sx={{ color: 'var(--accent)' }}
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    backgroundColor: 'var(--bg-primary)',
+                    borderRadius: 2,
+                    border: '1px solid var(--border-color)',
+                    padding: '8px 12px',
+                    margin: '8px 0',
+                    '&:hover': {
+                      backgroundColor: 'var(--bg-primary)',
+                      borderColor: 'var(--accent)',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'var(--bg-primary)',
+                      borderColor: 'var(--accent)',
+                      boxShadow: '0 0 0 2px rgba(16, 163, 127, 0.2)',
+                    },
+                  },
+                }}
+                InputLabelProps={{
+                  sx: {
+                    color: 'var(--text-secondary)',
+                    '&.Mui-focused': {
+                      color: 'var(--accent)',
+                    },
+                  },
+                }}
+                sx={{ mb: 3 }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={loading}
+                sx={{
+                  mt: 2,
+                  mb: 3,
+                  py: 1.8,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  backgroundColor: 'var(--accent)',
+                  color: 'white',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 15px rgba(16, 163, 127, 0.3)',
+                  '&:hover': {
+                    backgroundColor: '#0F8C6A',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(16, 163, 127, 0.4)',
+                  },
+                  '&:disabled': {
+                    backgroundColor: 'var(--bg-tertiary)',
+                    color: 'var(--text-secondary)',
+                    opacity: 0.6,
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                {loading ? '✨ Signing In...' : '🚀 Sign In'}
+              </Button>
+
+              <Box textAlign="center">
+                <Link to="/register" style={{ textDecoration: 'none' }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: 'var(--accent)',
+                      fontWeight: 500,
+                      '&:hover': {
+                        color: 'var(--accent)',
+                        opacity: 0.8,
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    ✨ Don't have an account? Create one here
+                  </Typography>
+                </Link>
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    </Box>
+  );
+}
+

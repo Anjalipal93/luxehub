@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Theme Variables */
+:root {
+  /* Light Mode (Grey & White) */
+  --light-bg-primary: #FFFFFF;
+  --light-bg-secondary: #F5F5F5;
+  --light-bg-tertiary: #E5E5E5;
+  --light-text-primary: #1A1A1A;
+  --light-text-secondary: #666666;
+  --light-text-muted: #999999;
+  --light-border: #CCCCCC;
+  --light-accent: #007ACC;
+
+  /* Dark Mode (ChatGPT Black & White) */
+  --dark-bg-primary: #0D0D0D;
+  --dark-bg-secondary: #1E1E1E;
+  --dark-bg-tertiary: #2A2A2A;
+  --dark-text-primary: #FFFFFF;
+  --dark-text-secondary: #C8C8C8;
+  --dark-text-muted: #888888;
+  --dark-border: #2A2A2A;
+  --dark-accent: #10A37F;
+}
+
+/* Default to light mode */
+[data-theme="light"] {
+  --bg-primary: var(--light-bg-primary);
+  --bg-secondary: var(--light-bg-secondary);
+  --bg-tertiary: var(--light-bg-tertiary);
+  --text-primary: var(--light-text-primary);
+  --text-secondary: var(--light-text-secondary);
+  --text-muted: var(--light-text-muted);
+  --border-color: var(--light-border);
+  --accent: var(--light-accent);
+}
+
+/* Dark mode */
+[data-theme="dark"] {
+  --bg-primary: var(--dark-bg-primary);
+  --bg-secondary: var(--dark-bg-secondary);
+  --bg-tertiary: var(--dark-bg-tertiary);
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
+  --text-muted: var(--dark-text-muted);
+  --border-color: var(--dark-border);
+  --accent: var(--dark-accent);
+}
+
+/* Default fallback - always light mode initially */
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F5;
+  --bg-tertiary: #E5E5E5;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-color: #CCCCCC;
+  --accent: #007ACC;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0F8C6A;
+}
+
+/* Remove default blue focus outlines and replace with ChatGPT theme */
+* {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(16, 163, 127, 0.2);
+}
+
+/* Override Material-UI default blue focus rings */
+.Mui-focused {
+  box-shadow: 0 0 0 2px var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px rgba(16, 163, 127, 0.2) !important;
+}
+
+.Mui-focusVisible {
+  box-shadow: 0 0 0 2px var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px rgba(16, 163, 127, 0.2) !important;
+}
+
+/* Global component overrides */
+.MuiPaper-root {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Force all text to use theme colors */
+.MuiTypography-root {
+  color: var(--text-primary) !important;
+}
+
+.MuiTypography-colorTextSecondary {
+  color: var(--text-secondary) !important;
+}
+
+/* Debug: Add a border to show which theme is active */
+[data-theme="dark"] body {
+  border-left: 3px solid var(--accent);
+}
+
+[data-theme="light"] body {
+  border-left: 3px solid var(--accent);
+}
+
+.MuiCard-root {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}
+
+.MuiButton-root {
+  background-color: var(--accent) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.MuiButton-root:hover {
+  background-color: #0F8C6A !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3) !important;
+}
+
+.MuiButton-outlined {
+  background-color: transparent !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiButton-outlined:hover {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--accent) !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: var(--border-color) !important;
+  transition: border-color 0.3s ease !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent) !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent) !important;
+}
+
+.MuiInputLabel-root {
+  color: var(--text-muted) !important;
+  transition: color 0.3s ease !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: var(--accent) !important;
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  font-weight: 600 !important;
+  transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+.MuiTableBody-root .MuiTableCell-root {
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: color 0.3s ease !important;
+}
+
+.MuiTableRow-root:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.MuiAlert-root {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+.MuiDialog-paper {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+.MuiDialogTitle-root {
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: color 0.3s ease !important;
+}
+
+.MuiTypography-root {
+  color: var(--text-primary) !important;
+  transition: color 0.3s ease !important;
+}
+
+.MuiTypography-colorTextSecondary {
+  color: var(--text-secondary) !important;
+  transition: color 0.3s ease !important;
+}
+
