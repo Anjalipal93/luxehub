@@ -60,10 +60,10 @@ io.on('connection', (socket) => {
 // Make io accessible to routes
 app.set('io', io);
 
-// MongoDB Connection
+// MongoDB Connection (UPDATED)
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-automation', {
+    await mongoose.connect(process.env.MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -76,8 +76,12 @@ const connectDB = async () => {
 
 connectDB();
 
+// Default route to avoid "Not Found"
+app.get("/", (req, res) => {
+  res.send("Backend is running successfully!");
+});
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
