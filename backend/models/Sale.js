@@ -4,82 +4,70 @@ const saleItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true
+    required: true,
   },
   quantity: {
     type: Number,
     required: true,
-    min: 1
+    min: 1,
   },
   price: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
   },
   subtotal: {
     type: Number,
-    required: true
-  }
+    required: true,
+  },
 });
 
-const saleSchema = new mongoose.Schema({
-  items: [saleItemSchema],
-  totalAmount: {
-    type: Number,
-    required: true,
-    min: 0
+const saleSchema = new mongoose.Schema(
+  {
+    items: [saleItemSchema],
+
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    customerName: String,
+    customerEmail: String,
+    customerPhone: String,
+
+    paymentMethod: {
+      type: String,
+      enum: ['cash', 'card', 'online', 'other'],
+      default: 'cash',
+    },
+
+    status: {
+      type: String,
+      enum: ['completed', 'pending', 'cancelled'],
+      default: 'completed',
+    },
+
+    // 👤 WHO MADE THE SALE
+    soldBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+
+    // 🧠 WHO OWNS THE DATA (ADMIN)
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+
+    notes: String,
   },
-  customerName: {
-    type: String,
-    trim: true
-  },
-  customerEmail: {
-    type: String,
-    trim: true
-  },
-  customerPhone: {
-    type: String,
-    trim: true
-  },
-  paymentMethod: {
-    type: String,
-    enum: ['cash', 'card', 'online', 'other'],
-    default: 'cash'
-  },
-  status: {
-    type: String,
-    enum: ['completed', 'pending', 'cancelled'],
-    default: 'completed'
-  },
-  soldBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  // Additional fields for Team Sales module
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  userName: {
-    type: String,
-    trim: true
-  },
-  amount: {
-    type: Number,
-    min: 0
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  },
-  notes: {
-    type: String,
-    trim: true
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 module.exports = mongoose.model('Sale', saleSchema);
-

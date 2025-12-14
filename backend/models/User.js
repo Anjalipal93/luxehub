@@ -24,6 +24,14 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'employee', 'user'],
     default: 'user'
   },
+
+  // 🔑 OWNER LINK (CRITICAL FOR AI INSIGHTS)
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
   phone: {
     type: String,
     trim: true
@@ -43,7 +51,12 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
-  }
+  },
+  excludeFromLeaderboard: {
+  type: Boolean,
+  default: false,
+}
+
 }, {
   timestamps: true
 });
@@ -71,4 +84,3 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 module.exports = mongoose.model('User', userSchema);
-

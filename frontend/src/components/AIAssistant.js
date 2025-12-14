@@ -128,7 +128,10 @@ export default function AIAssistant() {
 
   const handleVoiceInput = () => {
     if (!recognitionRef.current) {
-      alert('Voice recognition not supported in your browser');
+      // Toast notification instead of browser alert
+      import('react-toastify').then(({ toast }) => {
+        toast.warning('Voice recognition not supported in your browser');
+      });
       return;
     }
 

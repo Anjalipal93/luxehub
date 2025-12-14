@@ -1,6 +1,8 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const CustomerMessage = require('../models/CustomerMessage');
+const Notification = require('../models/Notification');
+const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -185,6 +187,7 @@ router.post('/receive', [
   body('content').trim().notEmpty().withMessage('Message content is required')
 ], async (req, res) => {
   try {
+    console.log('🔵 RECEIVE MESSAGE REQUEST:', JSON.stringify(req.body, null, 2));
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -218,6 +221,46 @@ router.post('/receive', [
     });
 
     await message.save();
+    console.log('✅ Message saved successfully:', message._id);
+
+    // Find all staff/admin users to notify
+    console.log('👥 Finding staff users...');
+    const staffUsers = await User.find({
+      role: { $in: ['admin', 'employee'] },
+      isActive: true
+    }).select('_id name email role');
+
+    console.log(`Found ${staffUsers.length} staff users:`, staffUsers.map(u => `${u.name} (${u.role})`));
+
+    // Create notifications for all staff members
+    const notifications = staffUsers.map(user => ({
+      user: user._id,
+      type: 'new_message',
+      title: 'New Customer Message',
+      message: `New message from ${customer.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
+      link: `/messages/thread/${threadId}`,
+      metadata: {
+        threadId,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        customerPhone: customer.phone,
+        messageId: message._id
+      }
+    }));
+
+    console.log(`📝 Created ${notifications.length} notification objects`);
+
+    // Save all notifications
+    if (notifications.length > 0) {
+      try {
+        const savedNotifications = await Notification.insertMany(notifications);
+        console.log(`✅ Successfully saved ${savedNotifications.length} notifications`);
+      } catch (notificationError) {
+        console.error('❌ Error saving notifications:', notificationError);
+      }
+    } else {
+      console.log('⚠️ No staff users found to notify');
+    }
 
     // Emit real-time notification
     const io = req.app.get('io');
@@ -229,6 +272,15 @@ router.post('/receive', [
         from: customer.name,
         timestamp: new Date(),
         isInbound: true
+      });
+
+      // Emit notification count update for real-time UI updates
+      staffUsers.forEach(user => {
+        io.emit(`notification-update-${user._id}`, {
+          type: 'new_message',
+          count: 1,
+          message: `New message from ${customer.name}`
+        });
       });
     }
 

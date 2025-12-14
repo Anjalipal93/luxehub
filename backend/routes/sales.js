@@ -4,16 +4,22 @@ const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const { auth } = require('../middleware/auth');
 const Notification = require('../models/Notification');
+const { logSaleActivity } = require('../services/activityLogger');
 
 const router = express.Router();
 
 // @route   GET /api/sales
-// @desc    Get all sales
+// @desc    Get all sales (filtered by user for non-admins)
 // @access  Private
 router.get('/', auth, async (req, res) => {
   try {
     const { startDate, endDate, status } = req.query;
     const query = {};
+
+    // Filter sales by user ID for non-admin users
+    if (req.user.role !== 'admin') {
+      query.soldBy = req.user._id;
+    }
 
     if (startDate || endDate) {
       query.createdAt = {};
@@ -82,6 +88,13 @@ router.post('/', auth, [
         return res.status(404).json({ message: `Product ${item.product} not found` });
       }
 
+      // Check if product belongs to current user (admins can sell any product)
+      if (req.user.role !== 'admin' && product.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          message: `Access denied. You can only sell your own products.`
+        });
+      }
+
       if (product.quantity < item.quantity) {
         return res.status(400).json({
           message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Requested: ${item.quantity}`
@@ -108,6 +121,7 @@ router.post('/', auth, [
       customerPhone,
       paymentMethod: paymentMethod || 'cash',
       soldBy: req.user._id,
+      ownerId: req.user._id,
       // Additional fields for Team Sales module
       userId: req.user._id,
       userName: req.user.name,
@@ -117,6 +131,14 @@ router.post('/', auth, [
     });
 
     await sale.save();
+
+    // Log activity
+    await logSaleActivity(req, 'create', `Created sale worth ₹${totalAmount}`, {
+      saleId: sale._id,
+      customerName,
+      totalAmount,
+      itemCount: saleItems.length
+    });
 
     // Update inventory
     for (const item of saleItems) {
@@ -196,13 +218,18 @@ router.get('/stats/revenue', auth, async (req, res) => {
         startDate = new Date(now.setMonth(now.getMonth() - 1));
     }
 
+    const matchStage = {
+      createdAt: { $gte: startDate },
+      status: 'completed'
+    };
+
+    // Filter by user for non-admin users
+    if (req.user.role !== 'admin') {
+      matchStage.soldBy = req.user._id;
+    }
+
     const stats = await Sale.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate },
-          status: 'completed'
-        }
-      },
+      { $match: matchStage },
       {
         $group: {
           _id: null,
@@ -227,7 +254,15 @@ router.get('/stats/top-products', auth, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
+    const matchStage = {};
+
+    // Filter by user for non-admin users
+    if (req.user.role !== 'admin') {
+      matchStage.soldBy = req.user._id;
+    }
+
     const topProducts = await Sale.aggregate([
+      { $match: matchStage },
       { $unwind: '$items' },
       {
         $group: {
@@ -292,6 +327,7 @@ router.post('/add', auth, [
       totalAmount: parseFloat(amount),
       customerName: customerName.trim(),
       soldBy: req.user._id,
+      ownerId: req.user._id,
       // Additional fields for Team Sales module
       userId: req.user._id,
       userName: req.user.name,

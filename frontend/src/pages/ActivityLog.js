@@ -118,36 +118,36 @@ export default function ActivityLog() {
   const fetchActivities = async () => {
     setLoading(true);
     try {
-      // In a real app, this would fetch from backend
-      // const response = await axios.get(`${API_URL}/activity-log`);
-      // setActivities(response.data.activities);
-
-      // For now, use sample data
-      setTimeout(() => {
-        setActivities(SAMPLE_ACTIVITIES);
-        setLoading(false);
-      }, 1000);
+      const response = await axios.get(`${API_URL}/activity-log`);
+      setActivities(response.data.activities);
     } catch (error) {
       console.error('Fetch activities error:', error);
-      toast.error('Failed to load activity log');
+      // Fallback to sample data if API fails
+      toast.warning('Using sample data. Backend may not be available.');
+      setActivities(SAMPLE_ACTIVITIES);
+    } finally {
       setLoading(false);
     }
   };
 
   const getActivityIcon = (type) => {
     switch (type) {
-      case 'auth':
+      case 'user':
         return <LoginIcon />;
-      case 'communication':
+      case 'message':
         return <MessageIcon />;
-      case 'inventory':
+      case 'product':
         return <CartIcon />;
-      case 'sales':
+      case 'sale':
         return <CartIcon />;
       case 'profile':
         return <EditIcon />;
-      case 'reports':
+      case 'report':
         return <ReportIcon />;
+      case 'notification':
+        return <MessageIcon />;
+      case 'dashboard':
+        return <AssessmentIcon />;
       default:
         return <AssessmentIcon />;
     }
@@ -155,41 +155,59 @@ export default function ActivityLog() {
 
   const getActivityColor = (type) => {
     switch (type) {
-      case 'auth':
+      case 'user':
         return '#10B981';
-      case 'communication':
+      case 'message':
         return '#2563EB';
-      case 'inventory':
+      case 'product':
         return '#F59E0B';
-      case 'sales':
+      case 'sale':
         return '#10B981';
       case 'profile':
         return '#8B5CF6';
-      case 'reports':
+      case 'report':
         return '#EF4444';
+      case 'notification':
+        return '#F97316';
+      case 'dashboard':
+        return '#8B5CF6';
       default:
         return '#6B7280';
     }
   };
 
   const filteredActivities = activities.filter(activity => {
-    const matchesSearch = activity.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         activity.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const isRealData = activity.hasOwnProperty('action') && activity.hasOwnProperty('resource');
+    const displayUser = isRealData ? (activity.user?.name || activity.userName) : activity.user;
+    const displayAction = isRealData ? activity.action : activity.action;
+    const displayResource = isRealData ? activity.resource : activity.type;
+
+    const matchesSearch = displayUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         displayAction.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          activity.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter = filterType === 'all' || activity.type === filterType;
+    const matchesFilter = filterType === 'all' || displayResource === filterType;
 
     return matchesSearch && matchesFilter;
   });
 
-  const activityStats = {
-    total: activities.length,
-    today: activities.filter(a => moment(a.timestamp).isSame(moment(), 'day')).length,
-    thisWeek: activities.filter(a => moment(a.timestamp).isSame(moment(), 'week')).length,
-    auth: activities.filter(a => a.type === 'auth').length,
-    communication: activities.filter(a => a.type === 'communication').length,
-    sales: activities.filter(a => a.type === 'sales').length,
-  };
+  const activityStats = activities.length > 0 && activities[0].hasOwnProperty('action')
+    ? {
+        total: activities.length,
+        today: activities.filter(a => moment(a.timestamp).isSame(moment(), 'day')).length,
+        thisWeek: activities.filter(a => moment(a.timestamp).isSame(moment(), 'week')).length,
+        auth: activities.filter(a => a.action === 'login' || a.action === 'logout').length,
+        communication: activities.filter(a => a.resource === 'message').length,
+        sales: activities.filter(a => a.resource === 'sale').length,
+      }
+    : {
+        total: activities.length,
+        today: activities.filter(a => moment(a.timestamp).isSame(moment(), 'day')).length,
+        thisWeek: activities.filter(a => moment(a.timestamp).isSame(moment(), 'week')).length,
+        auth: activities.filter(a => a.type === 'auth').length,
+        communication: activities.filter(a => a.type === 'communication').length,
+        sales: activities.filter(a => a.type === 'sales').length,
+      };
 
   if (loading) {
     return (
@@ -309,10 +327,11 @@ export default function ActivityLog() {
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               {[
                 { value: 'all', label: 'All' },
-                { value: 'auth', label: 'Authentication' },
-                { value: 'communication', label: 'Communication' },
-                { value: 'sales', label: 'Sales' },
-                { value: 'inventory', label: 'Inventory' },
+                { value: 'user', label: 'Users' },
+                { value: 'product', label: 'Products' },
+                { value: 'sale', label: 'Sales' },
+                { value: 'message', label: 'Messages' },
+                { value: 'report', label: 'Reports' },
               ].map((filter) => (
                 <Chip
                   key={filter.value}
@@ -359,68 +378,67 @@ export default function ActivityLog() {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Resource</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Time</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredActivities.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar sx={{ width: 32, height: 32 }}>
-                          {activity.user.charAt(0)}
-                        </Avatar>
+                {filteredActivities.map((activity) => {
+                  const isRealData = activity.hasOwnProperty('action') && activity.hasOwnProperty('resource');
+                  const displayUser = isRealData ? (activity.user?.name || activity.userName) : activity.user;
+                  const displayAction = isRealData ? activity.action : activity.action;
+                  const displayResource = isRealData ? activity.resource : activity.type;
+                  const displayType = isRealData ? activity.resource : activity.type;
+
+                  return (
+                    <TableRow key={activity._id || activity.id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar sx={{ width: 32, height: 32 }}>
+                            {displayUser.charAt(0)}
+                          </Avatar>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {displayUser}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {activity.user}
+                          {displayAction.charAt(0).toUpperCase() + displayAction.slice(1)}
                         </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {activity.action}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {activity.description}
-                      </Typography>
-                      {activity.amount && (
-                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
-                          ₹{activity.amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {displayResource.charAt(0).toUpperCase() + displayResource.slice(1)}
                         </Typography>
-                      )}
-                      {activity.ip && (
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {activity.description}
+                        </Typography>
+                        {activity.details?.amount && (
+                          <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                            ₹{activity.details.amount.toLocaleString()}
+                          </Typography>
+                        )}
+                        {activity.ipAddress && (
+                          <Typography variant="caption" color="text.secondary">
+                            IP: {activity.ipAddress}
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {moment(activity.timestamp).fromNow()}
+                        </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          IP: {activity.ip}
+                          {moment(activity.timestamp).format('MMM DD, YYYY HH:mm')}
                         </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        icon={getActivityIcon(activity.type)}
-                        label={activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
-                        size="small"
-                        sx={{
-                          backgroundColor: getActivityColor(activity.type),
-                          color: 'white',
-                          '& .MuiChip-icon': {
-                            color: 'white',
-                          },
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {moment(activity.timestamp).fromNow()}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {moment(activity.timestamp).format('MMM DD, YYYY HH:mm')}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>

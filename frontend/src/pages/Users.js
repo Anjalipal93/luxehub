@@ -12,10 +12,16 @@ import {
   IconButton,
   Chip,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -26,6 +32,8 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
   const { isAdmin } = useAuth();
 
   useEffect(() => {
@@ -44,10 +52,15 @@ export default function Users() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (userToDelete) {
       try {
-        await axios.delete(`${API_URL}/users/${id}`);
+        await axios.delete(`${API_URL}/users/${userToDelete._id}`);
         toast.success('User deleted successfully');
         fetchUsers();
       } catch (error) {
@@ -55,6 +68,13 @@ export default function Users() {
         toast.error('Failed to delete user');
       }
     }
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
   };
 
   if (!isAdmin) {
@@ -115,7 +135,7 @@ export default function Users() {
                 </TableCell>
                 <TableCell>
                   <IconButton size="small" color="error">
-                    <DeleteIcon onClick={() => handleDelete(user._id)} />
+                    <DeleteIcon onClick={() => handleDeleteClick(user)} />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -123,6 +143,33 @@ export default function Users() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningIcon color="warning" />
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the user "{userToDelete?.name}"?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -47,7 +47,7 @@
   --accent: var(--dark-accent);
 }
 
-/* Default fallback - always light mode initially */
+/* Default fallback - check localStorage for saved theme preference */
 :root {
   --bg-primary: #FFFFFF;
   --bg-secondary: #F5F5F5;
@@ -57,6 +57,11 @@
   --text-muted: #999999;
   --border-color: #CCCCCC;
   --accent: #007ACC;
+}
+
+/* Initialize theme on page load */
+html {
+  color-scheme: light dark;
 }
 
 * {
@@ -75,6 +80,24 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ensure html element also uses theme */
+html {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark theme specific body styling */
+[data-theme="dark"] body {
+  background-color: var(--dark-bg-primary);
+  color: var(--dark-text-primary);
+}
+
+[data-theme="dark"] html {
+  background-color: var(--dark-bg-primary);
+  color: var(--dark-text-primary);
 }
 
 code {
@@ -103,26 +126,30 @@ code {
   background: #0F8C6A;
 }
 
-/* Remove default blue focus outlines and replace with ChatGPT theme */
+/* Remove default blue focus outlines and replace with subtle theme */
 * {
   outline: none;
 }
 
 *:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(16, 163, 127, 0.2);
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
 }
 
-/* Override Material-UI default blue focus rings */
+/* Remove focus-visible outline from input elements */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+}
+
+/* Override Material-UI default blue focus rings - simplified */
 .Mui-focused {
-  box-shadow: 0 0 0 2px var(--accent) !important;
-  box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px rgba(16, 163, 127, 0.2) !important;
+  outline: none !important;
 }
 
 .Mui-focusVisible {
-  box-shadow: 0 0 0 2px var(--accent) !important;
-  box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px rgba(16, 163, 127, 0.2) !important;
+  outline: none !important;
 }
 
 /* Global component overrides */
@@ -170,7 +197,7 @@ code {
 .MuiButton-root:hover {
   background-color: #0F8C6A !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(16, 163, 127, 0.2) !important;
 }
 
 .MuiButton-outlined {
@@ -198,10 +225,12 @@ code {
 
 .MuiTextField-root .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
   border-color: var(--accent) !important;
+  border-width: 1px !important;
 }
 
 .MuiTextField-root .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
   border-color: var(--accent) !important;
+  border-width: 1px !important;
 }
 
 .MuiInputLabel-root {
@@ -259,5 +288,114 @@ code {
 .MuiTypography-colorTextSecondary {
   color: var(--text-secondary) !important;
   transition: color 0.3s ease !important;
+}
+
+/* Prevent dark boxes on focus for all interactive elements */
+button:focus,
+a:focus,
+[tabindex]:focus {
+  outline: 1px solid var(--accent) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
+}
+
+/* Remove outlines from input fields - they have their own border styling */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove unwanted outlines on hover (but keep other hover effects) */
+button:hover,
+a:hover,
+input:hover,
+textarea:hover,
+select:hover {
+  outline: none !important;
+}
+
+/* Ensure Material-UI components don't show dark boxes */
+.MuiButton-root:focus,
+.MuiButton-root:focus-visible {
+  outline: 1px solid var(--accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+.MuiIconButton-root:focus,
+.MuiIconButton-root:focus-visible {
+  outline: 1px solid var(--accent) !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important;
+}
+
+/* Simplify TextField focus states - remove all inner boxes */
+.MuiTextField-root .MuiOutlinedInput-root:focus,
+.MuiTextField-root .MuiOutlinedInput-root:focus-visible,
+.MuiTextField-root .MuiOutlinedInput-root input:focus,
+.MuiTextField-root .MuiOutlinedInput-root input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove any inner box effects from input elements */
+.MuiOutlinedInput-input:focus,
+.MuiOutlinedInput-input:focus-visible,
+.MuiInputBase-input:focus,
+.MuiInputBase-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove dark boxes from Paper and Card components on hover */
+.MuiPaper-root:hover,
+.MuiCard-root:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  outline: none !important;
+}
+
+/* Simplify table row hover */
+.MuiTableRow-root:hover {
+  background-color: var(--bg-tertiary) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Toast notifications dark theme support */
+.Toastify__toast {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.Toastify__toast--success {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.Toastify__toast--error {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.Toastify__toast--info {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.Toastify__toast--warning {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dark theme scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--dark-accent) !important;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #34D399 !important;
 }
 

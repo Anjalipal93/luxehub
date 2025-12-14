@@ -31,6 +31,13 @@ const messageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  // 👤 WHO OWNS THE DATA (ADMIN)
+  ownerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
   metadata: {
     type: mongoose.Schema.Types.Mixed
   }

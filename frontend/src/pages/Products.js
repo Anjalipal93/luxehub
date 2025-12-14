@@ -20,6 +20,7 @@ import {
   MenuItem,
   Chip,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -51,6 +52,8 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [open, setOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -65,17 +68,29 @@ export default function Products() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [categories, setCategories] = useState([]);
-  const { isAdmin, isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const { isAdmin, isAuthenticated, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
+    // Only fetch products when authentication is ready and user is authenticated
+    if (!authLoading && isAuthenticated) {
+      fetchProducts();
+      fetchCategories();
+    }
+  }, [authLoading, isAuthenticated]);
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_URL}/products/stats/categories`);
-      const uniqueCategories = [...new Set(products.map(p => p.category))];
+      // Ensure token is set in headers
+      const token = localStorage.getItem('token');
+      const config = token ? {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      } : {};
+      
+      const response = await axios.get(`${API_URL}/products/stats/categories`, config);
+      const uniqueCategories = [...new Set(response.data.map(stat => stat._id).filter(Boolean))];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Fetch categories error:', error);
@@ -84,14 +99,29 @@ export default function Products() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${API_URL}/products`);
+      setLoading(true);
+      // Ensure token is set in headers
+      const token = localStorage.getItem('token');
+      const config = token ? {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      } : {};
+      
+      const response = await axios.get(`${API_URL}/products`, config);
       setProducts(response.data);
       // Extract unique categories
       const uniqueCategories = [...new Set(response.data.map(p => p.category).filter(Boolean))];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Fetch products error:', error);
-      toast.error('Failed to load products');
+      if (error.response?.status === 401) {
+        toast.error('Please login to view your products');
+      } else {
+        toast.error('Failed to load products');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -162,26 +192,37 @@ export default function Products() {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
+
+      // Ensure numeric fields are sent as numbers, not strings
       Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
+        let value = formData[key];
+        if (['price', 'quantity', 'minThreshold'].includes(key)) {
+          value = parseFloat(value) || 0;
+        }
+        formDataToSend.append(key, value);
       });
       
       if (selectedImage) {
         formDataToSend.append('image', selectedImage);
       }
 
+      // Ensure token is set in headers
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'multipart/form-data',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       if (editingProduct) {
         await axios.put(`${API_URL}/products/${editingProduct._id}`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          headers,
         });
         toast.success('Product updated successfully');
       } else {
         await axios.post(`${API_URL}/products`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          headers,
         });
         toast.success('Product created successfully');
       }
@@ -193,10 +234,22 @@ export default function Products() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (productToDelete) {
       try {
-        await axios.delete(`${API_URL}/products/${id}`);
+        const token = localStorage.getItem('token');
+        const config = token ? {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        } : {};
+        
+        await axios.delete(`${API_URL}/products/${productToDelete._id}`, config);
         toast.success('Product deleted successfully');
         fetchProducts();
       } catch (error) {
@@ -204,7 +257,37 @@ export default function Products() {
         toast.error('Failed to delete product');
       }
     }
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
+  };
+
+  // Show loading state while auth is loading or products are being fetched
+  if (authLoading || loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Show message if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Box>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+          📦 Products
+        </Typography>
+        <Alert severity="info">
+          Please login to view and manage your products.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -391,7 +474,7 @@ export default function Products() {
                   )}
                 </TableCell>
                 <TableCell>
-                  {isAdmin && (
+                  {isAuthenticated && (
                     <>
                       <IconButton
                         size="small"
@@ -401,7 +484,7 @@ export default function Products() {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(product._id)}
+                        onClick={() => handleDeleteClick(product)}
                         color="error"
                       >
                         <DeleteIcon />
@@ -595,6 +678,33 @@ export default function Products() {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningIcon color="warning" />
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete the product "{productToDelete?.name}"?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

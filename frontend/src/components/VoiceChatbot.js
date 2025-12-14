@@ -9,6 +9,7 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  Button,
 } from '@mui/material';
 import {
   Mic as MicIcon,
@@ -22,11 +23,54 @@ import { toast } from 'react-toastify';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Local rule-based chatbot responses (fallback when backend is unavailable)
+const getLocalBotResponse = (message) => {
+  const lowerMessage = message.toLowerCase().trim();
+
+  // Greetings
+  if (lowerMessage.match(/\b(hi|hello|hey|greetings|good morning|good afternoon|good evening)\b/)) {
+    return "Hello! I'm your AI project assistant for the Business Automation System. I can help you with any questions about your project, including code structure, features, setup, deployment, and technical implementation. What would you like to know?";
+  }
+
+  // Project Overview
+  if (lowerMessage.match(/\b(project|system|application|business automation)\b/) && lowerMessage.match(/\b(what is|overview|about|tell me)\b/)) {
+    return "This is a comprehensive Business Automation System built with React (frontend) and Node.js/Express (backend) with MongoDB. It includes product & inventory management, sales tracking, AI-powered forecasting, multi-channel customer communication, team performance monitoring, and real-time notifications.";
+  }
+
+  // Technology Stack
+  if (lowerMessage.match(/\b(tech|technology|stack|framework|built with|uses)\b/)) {
+    return "Technology Stack: Frontend - React.js with Material-UI, Axios, Socket.io; Backend - Node.js with Express.js, MongoDB with Mongoose, JWT authentication; Deployment - Vercel and Railway/Heroku.";
+  }
+
+  // Setup/Installation
+  if (lowerMessage.match(/\b(setup|install|run|start|deploy|get started)\b/)) {
+    return "To set up: 1. Clone repository, 2. Run 'npm install' in both frontend and backend, 3. Set up environment variables, 4. Start MongoDB, 5. Run backend with 'npm start', 6. Run frontend with 'npm start'. Check SETUP_EMAIL_WHATSAPP.md for details.";
+  }
+
+  // Features
+  if (lowerMessage.match(/\b(feature|features|functionality|what can|capabilities)\b/)) {
+    return "Key Features: 📊 Dashboard, 📦 Product Management, 💰 Sales Tracking, 🤖 AI Forecasting, 📧 Communication (Email/WhatsApp), 👥 Team Performance, 🔐 Authentication, 🔔 Notifications. All with voice support!";
+  }
+
+  // Help
+  if (lowerMessage.match(/\b(help|how|what can you do|assist|support)\b/)) {
+    return "I can help with: 🛠️ Technical questions, 📋 Feature explanations, ⚙️ Setup guidance, 🐛 Troubleshooting, 💡 Architecture, 🎯 Best practices. Ask me anything about your business automation project!";
+  }
+
+  // Thank you
+  if (lowerMessage.match(/\b(thank|thanks|appreciate)\b/)) {
+    return "You're welcome! I'm here to help with any questions about your business automation project. Feel free to ask about code, features, setup, or anything else!";
+  }
+
+  // Default response
+  return "I understand you're asking about your business automation project. I can help with technical questions, feature explanations, setup guidance, and project architecture. Could you be more specific? For example: 'How do I set up the project?', 'What technologies are used?', or 'How does the AI forecasting work?'";
+};
+
 export default function VoiceChatbot() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hello! I\'m your AI assistant. You can talk to me by typing or using the microphone button. How can I help you today?',
+      content: 'Hello! I\'m your AI project assistant. I can help you with questions about your business automation system, including products, sales, inventory, AI forecasting, customer communication, and any technical aspects of your project. You can ask me anything by typing or using voice - just click the microphone button!',
       timestamp: new Date(),
     },
   ]);
@@ -40,51 +84,113 @@ export default function VoiceChatbot() {
 
   useEffect(() => {
     // Initialize Web Speech API
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
-      recognitionInstance.lang = 'en-US';
+    const initSpeechRecognition = () => {
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        try {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          const recognitionInstance = new SpeechRecognition();
 
-      recognitionInstance.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        handleSendMessage(transcript);
-      };
+          recognitionInstance.continuous = false;
+          recognitionInstance.interimResults = false;
+          recognitionInstance.lang = 'en-US';
 
-      recognitionInstance.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        if (event.error === 'no-speech') {
-          toast.info('No speech detected. Please try again.');
-        } else {
-          toast.error('Speech recognition error. Please try typing instead.');
+          recognitionInstance.onstart = () => {
+            console.log('Speech recognition started');
+            setIsListening(true);
+          };
+
+          recognitionInstance.onresult = (event) => {
+            console.log('Speech recognition result:', event);
+            const transcript = event.results[0][0].transcript;
+            console.log('Transcript:', transcript);
+            setInput(transcript);
+            setIsListening(false);
+            handleSendMessage(transcript);
+          };
+
+          recognitionInstance.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            setIsListening(false);
+            if (event.error === 'no-speech') {
+              toast.info('No speech detected. Please try again.');
+            } else if (event.error === 'not-allowed') {
+              toast.error('Microphone permission denied. Please allow microphone access.');
+            } else {
+              toast.error(`Speech recognition error: ${event.error}. Please try typing instead.`);
+            }
+          };
+
+          recognitionInstance.onend = () => {
+            console.log('Speech recognition ended');
+            setIsListening(false);
+          };
+
+          setRecognition(recognitionInstance);
+          console.log('Speech recognition initialized');
+        } catch (error) {
+          console.error('Error initializing speech recognition:', error);
+          toast.error('Speech recognition not available. Please try typing messages.');
         }
-      };
+      } else {
+        console.warn('Speech recognition not supported in this browser');
+        toast.warning('Speech recognition not supported in your browser. You can still type messages.');
+      }
+    };
 
-      recognitionInstance.onend = () => {
-        setIsListening(false);
-      };
+    // Initialize speech recognition on component mount
+    initSpeechRecognition();
 
-      setRecognition(recognitionInstance);
-    } else {
-      toast.warning('Speech recognition not supported in your browser. You can still type messages.');
-    }
+    // Initialize speech synthesis voices
+    const initSpeechSynthesis = () => {
+      if ('speechSynthesis' in window) {
+        const loadVoices = () => {
+          const voices = synthRef.current.getVoices();
+          console.log('Available voices:', voices.length);
+          if (voices.length > 0) {
+            console.log('Speech synthesis voices loaded');
+          }
+        };
+
+        // Voices might load asynchronously
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+          speechSynthesis.onvoiceschanged = loadVoices;
+        }
+      }
+    };
+
+    initSpeechSynthesis();
 
     // Scroll to bottom when new messages arrive
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, []); // Remove messages dependency to avoid re-initialization
 
   const startListening = () => {
     if (recognition) {
       try {
+        // Check if already listening
+        if (isListening) {
+          console.log('Already listening, stopping first');
+          recognition.stop();
+          setIsListening(false);
+          return;
+        }
+
+        console.log('Starting speech recognition...');
         recognition.start();
-        setIsListening(true);
+        // Don't set isListening here - let the onstart event handle it
         toast.info('Listening... Speak now!');
       } catch (error) {
         console.error('Error starting recognition:', error);
-        toast.error('Could not start voice recognition');
+        setIsListening(false);
+
+        if (error.name === 'InvalidStateError') {
+          toast.error('Speech recognition is already active. Please wait or try again.');
+        } else if (error.name === 'NotAllowedError') {
+          toast.error('Microphone permission denied. Please allow microphone access and try again.');
+        } else {
+          toast.error('Could not start voice recognition. Please try typing instead.');
+        }
       }
     } else {
       toast.warning('Voice recognition not available. Please type your message.');
@@ -113,64 +219,168 @@ export default function VoiceChatbot() {
     setIsLoading(true);
 
     try {
-      // Send to backend chatbot
-      const response = await axios.post(`${API_URL}/communication/chatbot`, {
-        message: text,
-        conversationHistory: messages.slice(-5), // Send last 5 messages for context
-      });
+      console.log('Sending message to chatbot:', text);
+      console.log('API URL:', `${API_URL}/communication/chatbot`);
+
+      // Try to send to backend chatbot first
+      let backendResponse = null;
+      try {
+        // Get conversation history (exclude the current message being sent)
+        const conversationHistory = messages.slice(0, -1).slice(-5).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+        const response = await axios.post(`${API_URL}/communication/chatbot`, {
+          message: text,
+          conversationHistory, // Send last 5 messages with only role and content
+        });
+        backendResponse = response.data;
+      } catch (apiError) {
+        console.log('Backend API not available, using local responses');
+        // Fall back to local rule-based responses
+        backendResponse = { response: getLocalBotResponse(text), source: 'local' };
+      }
+
+      console.log('Chatbot response:', backendResponse);
+      console.log('Response source:', backendResponse.source);
 
       const botMessage = {
         role: 'assistant',
-        content: response.data.response,
+        content: backendResponse.response,
         timestamp: new Date(),
+        source: backendResponse.source, // Track whether response is from backend API or local
       };
 
       setMessages((prev) => [...prev, botMessage]);
 
-      // Speak the response
-      speakText(response.data.response);
+      // Speak the response (only if it's not too short)
+      if (backendResponse.response && backendResponse.response.length > 5) {
+        speakText(backendResponse.response);
+      } else {
+        console.log('Response too short to speak:', backendResponse.response);
+      }
     } catch (error) {
       console.error('Chatbot error:', error);
+      console.log('Error details:', error.response?.data);
+      console.log('Error status:', error.response?.status);
+
+      // Fallback response for now
+      let fallbackMessage = 'Sorry, I encountered an error. Please try again.';
+
+      // Provide helpful fallback responses
+      if (error.response?.status === 500) {
+        fallbackMessage = 'Server error. The chatbot service is temporarily unavailable.';
+      } else if (!navigator.onLine) {
+        fallbackMessage = 'No internet connection. Please check your connection and try again.';
+      } else {
+        // Simple rule-based fallback
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes('hello') || lowerText.includes('hi')) {
+          fallbackMessage = 'Hello! How can I help you today?';
+        } else if (lowerText.includes('help')) {
+          fallbackMessage = 'I can help you with products, sales, inventory, and general business questions. What would you like to know?';
+        } else if (lowerText.includes('product')) {
+          fallbackMessage = 'You can manage products in the Products section. Add new items, check inventory, and monitor stock levels.';
+        } else if (lowerText.includes('sale')) {
+          fallbackMessage = 'Track your sales in the Sales section. Record transactions and view revenue analytics.';
+        }
+      }
+
       const errorMessage = {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: fallbackMessage,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      toast.error('Failed to get response from chatbot');
+
+      // Only show toast for network errors, not auth errors
+      if (!error.response || error.response.status !== 401) {
+        toast.error('Failed to get response from chatbot');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const speakText = (text) => {
-    if ('speechSynthesis' in window) {
-      setIsSpeaking(true);
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      utterance.lang = 'en-US';
+    if ('speechSynthesis' in window && text) {
+      try {
+        console.log('Attempting to speak:', text);
 
-      utterance.onend = () => {
+        // Cancel any ongoing speech
+        if (synthRef.current.speaking) {
+          synthRef.current.cancel();
+        }
+
+        setIsSpeaking(true);
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        // Configure speech settings
+        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.pitch = 1;
+        utterance.volume = 0.8; // Slightly lower volume
+        utterance.lang = 'en-US';
+
+        utterance.onstart = () => {
+          console.log('Speech synthesis started');
+        };
+
+        utterance.onend = () => {
+          console.log('Speech synthesis ended');
+          setIsSpeaking(false);
+        };
+
+        utterance.onerror = (error) => {
+          console.error('Speech synthesis error:', error);
+          setIsSpeaking(false);
+          toast.error('Speech synthesis failed. The response will be displayed as text.');
+        };
+
+        // Get available voices and use a good English voice if available
+        const voices = synthRef.current.getVoices();
+        console.log('Available voices for speech:', voices.length);
+
+        if (voices.length > 0) {
+          const englishVoice = voices.find(voice =>
+            voice.lang.startsWith('en') && voice.name.toLowerCase().includes('female')
+          ) || voices.find(voice => voice.lang.startsWith('en'));
+
+          if (englishVoice) {
+            utterance.voice = englishVoice;
+            console.log('Using voice:', englishVoice.name);
+          }
+        } else {
+          console.warn('No voices available yet, using default');
+        }
+
+        synthRef.current.speak(utterance);
+      } catch (error) {
+        console.error('Error in speakText:', error);
         setIsSpeaking(false);
-      };
-
-      utterance.onerror = (error) => {
-        console.error('Speech synthesis error:', error);
-        setIsSpeaking(false);
-      };
-
-      synthRef.current.speak(utterance);
+        toast.error('Speech synthesis failed. The response will be displayed as text.');
+      }
+    } else {
+      console.warn('Speech synthesis not supported or no text to speak');
+      toast.info('Speech synthesis not supported. The response will be displayed as text.');
     }
   };
 
   const stopSpeaking = () => {
     if (synthRef.current) {
-      synthRef.current.cancel();
-      setIsSpeaking(false);
+      try {
+        if (synthRef.current.speaking || synthRef.current.pending) {
+          synthRef.current.cancel();
+          console.log('Speech cancelled');
+        }
+        setIsSpeaking(false);
+      } catch (error) {
+        console.error('Error stopping speech:', error);
+        setIsSpeaking(false);
+      }
     }
   };
+
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -220,6 +430,11 @@ export default function VoiceChatbot() {
                 <Typography variant="body1">{msg.content}</Typography>
                 <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5 }}>
                   {new Date(msg.timestamp).toLocaleTimeString()}
+                  {msg.source && (
+                    <span style={{ marginLeft: '8px', fontSize: '0.7em' }}>
+                      ({msg.source})
+                    </span>
+                  )}
                 </Typography>
               </Paper>
             </Box>
@@ -238,8 +453,39 @@ export default function VoiceChatbot() {
         <Alert severity="info" sx={{ mb: 2 }}>
           <Typography variant="body2">
             💡 Tip: Click the microphone to speak, or type your message. The AI will respond with voice and text.
+            <br />
+            <strong>Note:</strong> Allow microphone access when prompted for voice input.
           </Typography>
         </Alert>
+
+
+        {/* Debug buttons for testing speech features */}
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => speakText('Hello! This is a test of the speech synthesis.')}
+            disabled={isSpeaking}
+          >
+            Test Speech
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => console.log('Speech recognition available:', !!recognition)}
+            color="secondary"
+          >
+            Check Speech Recognition
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => console.log('Available voices:', synthRef.current?.getVoices().length || 0)}
+            color="secondary"
+          >
+            Check Voices
+          </Button>
+        </Box>
 
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
           <TextField

@@ -21,6 +21,11 @@ export const ThemeProvider = ({ children }) => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
     // Set the data-theme attribute on the document element
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    // Also set on body for immediate effect
+    document.body.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    // Update body background color
+    document.body.style.backgroundColor = darkMode ? '#0D0D0D' : '#FFFFFF';
+    document.body.style.color = darkMode ? '#FFFFFF' : '#1A1A1A';
   }, [darkMode]);
 
   const toggleTheme = () => {

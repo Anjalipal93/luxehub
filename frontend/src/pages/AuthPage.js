@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -24,7 +24,10 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState(0); // 0 for login, 1 for signup
+  const location = useLocation();
+  // Set initial tab based on route: /register -> tab 1, /login or /auth -> tab 0
+  const initialTab = location.pathname === '/register' ? 1 : 0;
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [formData, setFormData] = useState({
     // Login fields
     email: '',
@@ -45,9 +48,17 @@ export default function AuthPage() {
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
+  // Update tab when route changes
+  useEffect(() => {
+    const newTab = location.pathname === '/register' ? 1 : 0;
+    setActiveTab(newTab);
+  }, [location.pathname]);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     setError('');
+    // Update URL when tab changes
+    navigate(newValue === 1 ? '/register' : '/login', { replace: true });
     setFormData({
       email: '',
       password: '',
@@ -143,8 +154,9 @@ export default function AuthPage() {
         toast.success('Welcome back! 🎉');
         navigate('/dashboard');
       } else {
-        setError(result.message);
-        toast.error(result.message);
+        const errorMsg = result.message || 'Login failed. Please check your credentials and try again.';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } else {
       // Signup
@@ -166,11 +178,15 @@ export default function AuthPage() {
           toast.success('Registration completed successfully! 🎉');
           navigate('/dashboard');
         } else {
-          setError(result.message);
+          const errorMsg = result.message || 'Registration failed. Please try again.';
+          setError(errorMsg);
+          toast.error(errorMsg);
         }
       } catch (error) {
         console.error('Registration error:', error);
-        setError('Registration failed. Please try again.');
+        const errorMsg = error.message || 'Registration failed. Please check your connection and try again.';
+        setError(errorMsg);
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -659,4 +675,8 @@ export default function AuthPage() {
     </Box>
   );
 }
+
+
+
+
 

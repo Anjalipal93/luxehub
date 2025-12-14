@@ -22,7 +22,7 @@ import {
   CardContent,
   IconButton,
 } from '@mui/material';
-import { Add as AddIcon, Message as MessageIcon } from '@mui/icons-material';
+import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -293,28 +293,7 @@ export default function Sales() {
                   {moment(sale.createdAt).format('MMM DD, YYYY HH:mm')}
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {sale.customerName || 'Walk-in'}
-                    {(sale.customerEmail || sale.customerPhone) && (
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          navigate('/customer-messages', {
-                            state: {
-                              customer: {
-                                name: sale.customerName,
-                                email: sale.customerEmail,
-                                phone: sale.customerPhone,
-                              },
-                            },
-                          });
-                        }}
-                        title="Message customer"
-                      >
-                        <MessageIcon fontSize="small" />
-                      </IconButton>
-                    )}
-                  </Box>
+                  {sale.customerName || 'Walk-in'}
                 </TableCell>
                 <TableCell>{sale.items.length}</TableCell>
                 <TableCell>${sale.totalAmount.toFixed(2)}</TableCell>

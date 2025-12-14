@@ -48,12 +48,38 @@ router.put('/me', auth, avatarUpload.single('avatar'), async (req, res) => {
 });
 
 // @route   GET /api/users
-// @desc    Get all users
-// @access  Private (Admin only)
-router.get('/', auth, adminOnly, async (req, res) => {
+// @desc    Get all users (with online status for chat)
+// @access  Private
+router.get('/', auth, async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
-    res.json(users);
+    const users = await User.find().select('-password').sort({ name: 1 });
+    
+    // Get online users from socket.io
+    const io = req.app.get('io');
+    const onlineUserIds = new Set();
+    
+    if (io) {
+      try {
+        // Get all connected sockets and their user IDs
+        const sockets = await io.fetchSockets();
+        sockets.forEach(socket => {
+          if (socket.userId) {
+            onlineUserIds.add(socket.userId.toString());
+          }
+        });
+      } catch (socketError) {
+        console.error('Error fetching sockets:', socketError);
+        // Continue without online status if socket fetch fails
+      }
+    }
+    
+    // Add online status to each user
+    const usersWithStatus = users.map(user => ({
+      ...user.toObject(),
+      isOnline: onlineUserIds.has(user._id.toString()),
+    }));
+    
+    res.json(usersWithStatus);
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ message: 'Server error' });

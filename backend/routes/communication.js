@@ -4,7 +4,15 @@ const Message = require('../models/Message');
 const Sale = require('../models/Sale');
 const { auth } = require('../middleware/auth');
 const emailService = require('../services/emailService');
-const whatsappService = require('../services/whatsappService');
+// let whatsappService = null;
+
+// function getWhatsAppService() {
+//   if (!whatsappService) {
+//     whatsappService = require('../services/whatsappService');
+//   }
+//   return whatsappService;
+// }
+
 
 const router = express.Router();
 
@@ -142,6 +150,7 @@ router.post('/send-email', auth, [
         content,
         status: result.success ? 'sent' : 'failed',
         sentBy: req.user._id,
+        ownerId: req.user.ownerId || req.user._id,
         metadata: result
       });
 
@@ -235,6 +244,7 @@ router.post('/send-whatsapp', auth, [
         content: message,
         status: result.success ? 'sent' : 'failed',
         sentBy: req.user._id,
+        ownerId: req.user.ownerId || req.user._id,
         metadata: result
       });
 

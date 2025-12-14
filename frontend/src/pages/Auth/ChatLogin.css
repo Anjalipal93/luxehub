@@ -320,7 +320,7 @@
 
 .chat-input .MuiOutlinedInput-root.Mui-focused fieldset {
   border-color: #38BDF8 !important;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
+  border-width: 1px !important;
 }
 
 .chat-input .MuiInputBase-input::placeholder {

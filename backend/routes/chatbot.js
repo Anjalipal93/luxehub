@@ -1,74 +1,95 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { auth } = require('../middleware/auth');
 const axios = require('axios');
 
 const router = express.Router();
 
-// Simple rule-based chatbot responses
+// Enhanced rule-based chatbot responses for business automation project
 const getBotResponse = (message, conversationHistory = []) => {
   const lowerMessage = message.toLowerCase().trim();
 
   // Greetings
   if (lowerMessage.match(/\b(hi|hello|hey|greetings|good morning|good afternoon|good evening)\b/)) {
-    return "Hello! I'm your AI business assistant. How can I help you today? I can help with products, sales, inventory, or general questions about the business.";
+    return "Hello! I'm your AI project assistant for the Business Automation System. I can help you with any questions about your project, including code structure, features, setup, deployment, and technical implementation. What would you like to know?";
+  }
+
+  // Project Overview
+  if (lowerMessage.match(/\b(project|system|application|business automation)\b/) && lowerMessage.match(/\b(what is|overview|about|tell me)\b/)) {
+    return "This is a comprehensive Business Automation System built with React (frontend) and Node.js/Express (backend) with MongoDB. It includes:\n\n• Product & Inventory Management\n• Sales Tracking & Analytics\n• AI-Powered Forecasting\n• Multi-channel Customer Communication\n• Team Performance Monitoring\n• Real-time Notifications\n\nThe system uses modern technologies like Material-UI, Chart.js, Socket.io, and integrates with external services (email, WhatsApp via Twilio).";
+  }
+
+  // Technology Stack
+  if (lowerMessage.match(/\b(tech|technology|stack|framework|built with|uses)\b/)) {
+    return "Technology Stack:\n\nFrontend:\n• React.js with Material-UI\n• Axios for API calls\n• Socket.io for real-time features\n• React Router for navigation\n• Chart.js for analytics\n\nBackend:\n• Node.js with Express.js\n• MongoDB with Mongoose\n• JWT for authentication\n• Multer for file uploads\n• Nodemailer for emails\n• Twilio for WhatsApp\n\nDeployment:\n• Vercel for frontend\n• Railway/Heroku for backend";
+  }
+
+  // Setup/Installation
+  if (lowerMessage.match(/\b(setup|install|run|start|deploy|get started)\b/)) {
+    return "To set up the project:\n\n1. Clone the repository\n2. Install dependencies: `npm install` in both frontend and backend\n3. Set up environment variables in backend/.env\n4. Start MongoDB\n5. Run backend: `npm start` in backend folder\n6. Run frontend: `npm start` in frontend folder\n\nCheck SETUP_EMAIL_WHATSAPP.md and QUICKSTART.md for detailed instructions.";
+  }
+
+  // Features
+  if (lowerMessage.match(/\b(feature|features|functionality|what can|capabilities)\b/)) {
+    return "Key Features:\n\n📊 Dashboard - Business overview with charts\n📦 Products - Inventory management\n💰 Sales - Transaction tracking\n🤖 AI Forecast - Predictive analytics\n📧 Communication - Multi-channel messaging\n👥 Team Performance - User analytics\n🔔 Notifications - Real-time alerts\n🔐 Authentication - Secure login system\n\nAll features support both voice and text interaction!";
+  }
+
+  // Voice Features
+  if (lowerMessage.match(/\b(voice|speech|microphone|talk|speak|audio)\b/)) {
+    return "Voice Features:\n\n• Voice input using Web Speech API\n• Text-to-speech responses\n• Real-time speech recognition\n• Multi-language support\n• Hands-free operation\n\nClick the microphone button to speak, and the AI will respond both with voice and text. Make sure to allow microphone permissions in your browser.";
+  }
+
+  // API/Backend
+  if (lowerMessage.match(/\b(api|backend|server|endpoint|route)\b/)) {
+    return "Backend API Structure:\n\nAuthentication: /api/auth/*\nProducts: /api/products/*\nSales: /api/sales/*\nAI Forecast: /api/ai/*\nCommunication: /api/communication/*\nUsers: /api/users/*\n\nAll endpoints require JWT authentication. The server runs on port 5000 by default and uses MongoDB for data storage.";
+  }
+
+  // Database
+  if (lowerMessage.match(/\b(database|mongodb|data|storage|model)\b/)) {
+    return "Database Models:\n\n• User - Authentication & profiles\n• Product - Inventory items\n• Sale - Transactions\n• Message - Communication logs\n• Notification - System alerts\n• CustomerMessage - Customer interactions\n\nUses MongoDB with Mongoose ODM. All models include timestamps and proper validation.";
+  }
+
+  // AI Features
+  if (lowerMessage.match(/\b(ai|forecast|prediction|analytics|machine learning)\b/)) {
+    return "AI Features:\n\n• Sales forecasting using historical data\n• Inventory prediction algorithms\n• Reorder point recommendations\n• Trend analysis with Chart.js\n• OpenAI integration for intelligent responses\n• Automated business insights\n\nThe AI analyzes patterns in your sales data to predict future demand and suggest optimal inventory levels.";
+  }
+
+  // Communication
+  if (lowerMessage.match(/\b(email|whatsapp|message|contact|customer|send|communication)\b/)) {
+    return "Communication System:\n\n• Email integration via SMTP/OAuth2\n• WhatsApp via Twilio API\n• Voice chatbot with speech recognition\n• Group messaging capabilities\n• Customer database integration\n• Message history and analytics\n\nCurrently configured for AI voice chatbot only - email and WhatsApp features are available but require additional setup.";
   }
 
   // Products
   if (lowerMessage.match(/\b(product|products|inventory|stock|items)\b/)) {
-    return "I can help you with product information! You can check the Products page to see all items, add new products, or check stock levels. Would you like to know about a specific product?";
+    return "Product Management:\n\n• Add/edit/delete products\n• Stock level tracking\n• Category organization\n• Price management\n• Low stock alerts\n• QR code generation\n• Image upload support\n\nEach product tracks quantity, minimum threshold, and generates automatic reorder alerts.";
   }
 
   // Sales
   if (lowerMessage.match(/\b(sale|sales|revenue|income|profit|transaction)\b/)) {
-    return "I can help with sales information! Check the Sales page to view all transactions, record new sales, or see revenue statistics. The Dashboard also shows sales trends and analytics.";
-  }
-
-  // Inventory/Low Stock
-  if (lowerMessage.match(/\b(low stock|out of stock|restock|reorder|inventory low)\b/)) {
-    return "I can help you check inventory levels! The system automatically alerts you when products are running low. Check the Products page or Dashboard for low stock alerts. You can also use the AI Forecast feature to predict when you'll need to reorder.";
-  }
-
-  // AI/Forecast
-  if (lowerMessage.match(/\b(forecast|prediction|ai|predict|future sales|analytics)\b/)) {
-    return "Our AI forecasting system can predict future sales and inventory needs! Visit the AI Forecast page to see predictions for each product, get reorder recommendations, and view AI-powered business suggestions.";
-  }
-
-  // Communication
-  if (lowerMessage.match(/\b(email|whatsapp|message|contact|customer|send)\b/)) {
-    return "You can send messages to customers through multiple channels! Use the Communication page to send emails or WhatsApp messages. You can even send group messages to multiple customers at once!";
+    return "Sales Management:\n\n• Record new transactions\n• Customer information tracking\n• Revenue analytics\n• Sales history\n• Product performance\n• Date range filtering\n• Export capabilities\n\nAutomatically updates inventory when sales are recorded.";
   }
 
   // Help
-  if (lowerMessage.match(/\b(help|how|what can you do|features|capabilities)\b/)) {
-    return "I can help you with:\n• Product and inventory management\n• Sales tracking and analytics\n• AI-powered forecasting\n• Customer communication (email, WhatsApp)\n• Business insights and recommendations\n\nJust ask me about any of these topics!";
+  if (lowerMessage.match(/\b(help|how|what can you do|assist|support)\b/)) {
+    return "I can help you with:\n\n🛠️ Technical questions about the codebase\n📋 Feature explanations and usage\n⚙️ Setup and deployment guidance\n🐛 Troubleshooting and debugging\n💡 Project architecture and design\n🎯 Best practices and recommendations\n\nAsk me anything about your business automation project!";
   }
 
   // Thank you
   if (lowerMessage.match(/\b(thank|thanks|appreciate)\b/)) {
-    return "You're welcome! Is there anything else I can help you with?";
+    return "You're welcome! I'm here to help with any questions about your business automation project. Feel free to ask about code, features, setup, or anything else!";
   }
 
   // Goodbye
   if (lowerMessage.match(/\b(bye|goodbye|see you|exit|quit)\b/)) {
-    return "Goodbye! Feel free to come back anytime if you need assistance. Have a great day!";
+    return "Goodbye! Remember, I'm always here to help with your business automation project. Have a great day!";
   }
 
-  // Questions about the system
-  if (lowerMessage.match(/\b(what is|what are|explain|tell me about)\b/)) {
-    if (lowerMessage.includes('dashboard')) {
-      return "The Dashboard shows you an overview of your business: total revenue, sales statistics, product counts, low stock alerts, and interactive charts. It's your command center!";
-    }
-    if (lowerMessage.includes('ai forecast')) {
-      return "AI Forecast uses machine learning to predict future sales and inventory needs. It analyzes your sales history and suggests when to reorder products, helping you make data-driven decisions.";
-    }
-    if (lowerMessage.includes('communication')) {
-      return "The Communication module lets you send messages to customers via email, WhatsApp, or web chat. You can send to individual customers or groups, making it easy to keep in touch with your customer base.";
-    }
+  // Code/File Structure
+  if (lowerMessage.match(/\b(code|file|structure|folder|directory|component)\b/)) {
+    return "Project Structure:\n\nFrontend (React):\n• src/components/ - Reusable components\n• src/pages/ - Main application pages\n• src/context/ - React context providers\n• src/services/ - API service functions\n\nBackend (Node.js):\n• routes/ - API endpoint handlers\n• models/ - MongoDB schemas\n• middleware/ - Authentication & uploads\n• services/ - External integrations\n\nThe architecture follows modern best practices with separation of concerns.";
   }
 
-  // Default response - try to be helpful
-  return "I understand you're asking about: \"" + message + "\". I can help you with:\n• Product and inventory management\n• Sales and revenue tracking\n• AI forecasting and predictions\n• Customer communication\n• Business analytics\n\nCould you be more specific about what you need help with?";
+  // Default response
+  return "I understand you're asking about your business automation project. I can help with:\n\n• Technical questions about the codebase\n• Feature explanations and usage\n• Setup and deployment guidance\n• Project architecture\n• Troubleshooting\n\nCould you be more specific? For example: 'How do I set up the project?', 'What technologies are used?', or 'How does the AI forecasting work?'";
 };
 
 // Enhanced response with context awareness
@@ -106,7 +127,7 @@ const getContextualResponse = (message, conversationHistory) => {
 // @route   POST /api/communication/chatbot
 // @desc    Chat with AI assistant
 // @access  Private
-router.post('/chatbot', auth, [
+router.post('/chatbot', [
   body('message').trim().notEmpty().withMessage('Message is required')
 ], async (req, res) => {
   try {
@@ -128,7 +149,7 @@ router.post('/chatbot', auth, [
             messages: [
               {
                 role: 'system',
-                content: 'You are a helpful AI assistant for a business automation system. Help users with products, sales, inventory, forecasting, and customer communication. Be concise and friendly.'
+                content: 'You are a helpful AI assistant for a Business Automation System project. Help users with technical questions about the codebase, features, setup, deployment, and implementation details. The system is built with React frontend, Node.js/Express backend, MongoDB database, and includes features like product management, sales tracking, AI forecasting, voice chat, and multi-channel communication. Provide detailed, accurate technical information and be friendly and helpful.'
               },
               ...conversationHistory.map(msg => ({
                 role: msg.role === 'user' ? 'user' : 'assistant',

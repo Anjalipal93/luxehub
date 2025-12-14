@@ -38,6 +38,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Message as MessageIcon,
   QrCode as QrCodeIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -46,21 +47,22 @@ import NotificationsCenter from './NotificationsCenter';
 const drawerWidth = 240;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', emoji: '📊' },
-  { text: 'Products', icon: <InventoryIcon />, path: '/products', emoji: '📦' },
-  { text: 'Sales', icon: <SalesIcon />, path: '/sales', emoji: '💰' },
-  { text: 'Team Sales', icon: <GroupsIcon />, path: '/team-sales', emoji: '💼' },
-  { text: 'AI Forecast', icon: <AIIcon />, path: '/ai-forecast', emoji: '🤖' },
-  { text: 'AI Insights', icon: <InsightsIcon />, path: '/ai-insights', emoji: '🔍' },
-  { text: 'Customer Messages', icon: <ChatIcon />, path: '/customer-messages', emoji: '💬' },
-  { text: 'Communication', icon: <ChatIcon />, path: '/communication', emoji: '📧' },
-  { text: 'Users', icon: <PeopleIcon />, path: '/users', emoji: '👥' },
-  { text: 'Invite Collaborators', icon: <PersonAddIcon />, path: '/invite-collaborators', emoji: '👥' },
-  { text: 'Team Performance', icon: <TrendingUpIcon />, path: '/team-performance', emoji: '📊' },
-  { text: 'Activity Log', icon: <HistoryIcon />, path: '/activity-log', emoji: '📋' },
-  { text: 'Talk With Big Entrepreneurs', icon: <BusinessIcon />, path: '/entrepreneurs', emoji: '🎯' },
-  { text: 'Chatting & Messages', icon: <MessageIcon />, path: '/chatting-messages', emoji: '💬' },
-  { text: 'Product QR Generator', icon: <QrCodeIcon />, path: '/product-qr', emoji: '📱' },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', emoji: '' },
+  { text: 'Products', icon: <InventoryIcon />, path: '/products', emoji: '' },
+  { text: 'Sales', icon: <SalesIcon />, path: '/sales', emoji: '' },
+  { text: 'Team Sales', icon: <GroupsIcon />, path: '/team-sales', emoji: '' },
+  { text: 'Messages', icon: <MessageIcon />, path: '/messages', emoji: '' },
+  { text: 'AI Forecast', icon: <AIIcon />, path: '/ai-forecast', emoji: '' },
+  { text: 'AI Insights', icon: <InsightsIcon />, path: '/ai-insights', emoji: '' },
+  { text: 'Chatbot', icon: <ChatIcon />, path: '/communication', emoji: '' },
+  { text: 'Email', icon: <EmailIcon />, path: '/email', emoji: '' },
+  { text: 'Users', icon: <PeopleIcon />, path: '/users', emoji: '' },
+  { text: 'Invite Collaborators', icon: <PersonAddIcon />, path: '/invite-collaborators', emoji: '' },
+  { text: 'Team Performance', icon: <TrendingUpIcon />, path: '/team-performance', emoji: '' },
+  { text: 'Activity Log', icon: <HistoryIcon />, path: '/activity-log', emoji: '' },
+  { text: 'Talk With Big Entrepreneurs', icon: <BusinessIcon />, path: '/entrepreneurs', emoji: '' },
+  { text: 'Whatsapp', icon: <MessageIcon />, path: '/chatting-messages', emoji: '' },
+  { text: 'Product QR Generator', icon: <QrCodeIcon />, path: '/product-qr', emoji: '' },
 ];
 
 export default function Layout() {

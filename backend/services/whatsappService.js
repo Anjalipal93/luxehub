@@ -6,9 +6,18 @@ class WhatsAppService {
     this.isConfigured = false;
 
     // Check if all required credentials are present
-    const hasAccountSid = !!process.env.TWILIO_ACCOUNT_SID;
-    const hasAuthToken = !!process.env.TWILIO_AUTH_TOKEN;
-    const hasWhatsAppNumber = !!process.env.TWILIO_WHATSAPP_NUMBER;
+  const hasAccountSid =
+  typeof process.env.TWILIO_ACCOUNT_SID === 'string' &&
+  process.env.TWILIO_ACCOUNT_SID.startsWith('AC');
+
+const hasAuthToken =
+  typeof process.env.TWILIO_AUTH_TOKEN === 'string' &&
+  process.env.TWILIO_AUTH_TOKEN.length > 0;
+
+const hasWhatsAppNumber =
+  typeof process.env.TWILIO_WHATSAPP_NUMBER === 'string' &&
+  process.env.TWILIO_WHATSAPP_NUMBER.startsWith('whatsapp:');
+
 
     if (hasAccountSid && hasAuthToken && hasWhatsAppNumber) {
       this.client = twilio(
