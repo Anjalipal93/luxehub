@@ -11,8 +11,11 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
+    origin: [
+      "http://localhost:3000",
+      "https://luxehub-elz6.vercel.app"
+    ],
+    methods: ["GET", "POST"],
     credentials: true,
   },
 });
@@ -30,10 +33,14 @@ const MAX_HISTORY = 200;
 // =======================
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: [
+      "http://localhost:3000",
+      "https://luxehub-elz6.vercel.app"
+    ],
     credentials: true,
   })
 );
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
