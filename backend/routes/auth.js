@@ -5,7 +5,7 @@ const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 const { logAuthActivity } = require('../services/activityLogger');
 
-// Import the database models
+// Models
 const CollaboratorInvite = require('../models/CollaboratorInvite');
 const Team = require('../models/Team');
 const Notification = require('../models/Notification');
@@ -62,76 +62,80 @@ router.post(
       }
 
       // ===============================
+      // CREATE USER FIRST (FIX)
+      // ===============================
+      const user = new User({
+  name,
+  email: email.toLowerCase(),
+  password,
+  phone,
+  role: 'admin',
+});
+
+
+      // ===============================
       // INVITE HANDLING (?invite=TOKEN)
       // ===============================
       let inviteData = null;
       const inviteToken = req.query.invite;
 
       if (inviteToken) {
-        // Find the invite by token
         const invite = await CollaboratorInvite.findOne({
           token: inviteToken,
           status: 'Pending',
           expiresAt: { $gt: new Date() },
         }).populate('invitedBy', 'name email');
 
-        if (invite) {
-          // Check if email matches
-          if (invite.email !== email.toLowerCase()) {
-            return res.status(400).json({
-              success: false,
-              message: 'This invitation is for a different email address.',
-            });
-          }
-
-          // Set user properties for collaborator
-          user.ownerId = invite.invitedBy; // Link to the person who invited them
-          user.role = 'employee'; // Collaborators get employee role
-
-          inviteData = {
-            invite: invite,
-            accepted: true,
-          };
-        } else {
+        if (!invite) {
           return res.status(400).json({
             success: false,
             message: 'Invalid or expired invitation token.',
           });
         }
+
+        if (invite.email !== email.toLowerCase()) {
+          return res.status(400).json({
+            success: false,
+            message: 'This invitation is for a different email address.',
+          });
+        }
+
+        // Apply collaborator settings
+        user.ownerId = invite.invitedBy._id;
+        user.role = 'employee';
+
+        inviteData = invite;
       }
 
-
       // ===============================
-      // SAVE USER
+      // SAVE USER (FIXED)
       // ===============================
       await user.save();
 
       // ===============================
       // HANDLE INVITE ACCEPTANCE
       // ===============================
-      if (inviteData && inviteData.accepted) {
-        // Update the invite status
-        inviteData.invite.status = 'Accepted';
-        inviteData.invite.acceptedAt = new Date();
-        inviteData.invite.acceptedBy = user._id;
-        await inviteData.invite.save();
+      if (inviteData) {
+        inviteData.status = 'Accepted';
+        inviteData.acceptedAt = new Date();
+        inviteData.acceptedBy = user._id;
+        await inviteData.save();
 
-        // Add user to the team
         try {
-          let team = await Team.findOne({ ownerId: inviteData.invite.invitedBy._id });
+          let team = await Team.findOne({
+            ownerId: inviteData.invitedBy._id,
+          });
 
-          // Create team if it doesn't exist
           if (!team) {
             team = new Team({
-              teamName: `${inviteData.invite.invitedBy.name}'s Team`,
-              ownerId: inviteData.invite.invitedBy._id,
-              ownerName: inviteData.invite.invitedBy.name,
-              ownerEmail: inviteData.invite.invitedBy.email,
+              teamName: `${inviteData.invitedBy.name}'s Team`,
+              ownerId: inviteData.invitedBy._id,
+              ownerName: inviteData.invitedBy.name,
+              ownerEmail: inviteData.invitedBy.email,
               members: [],
             });
           }
 
-          // Add the new member to the team
           await team.addMember({
             userId: user._id,
             name: user.name,
@@ -140,31 +144,21 @@ router.post(
             status: 'active',
           });
 
-          console.log(`✅ User ${user.name} (${user.email}) accepted invitation from ${inviteData.invite.invitedBy.name} and was added to their team`);
+          await team.save();
 
-          // Create notification for the inviter
-          try {
-            await Notification.create({
-              user: inviteData.invite.invitedBy._id,
-              type: 'new_message', // Using new_message type for now, could create a new type
-              title: 'Collaborator Joined',
-              message: `${user.name} (${user.email}) accepted your invitation and joined your team.`,
-              link: '/invite-collaborators',
-              metadata: {
-                collaboratorId: user._id,
-                collaboratorName: user.name,
-                collaboratorEmail: user.email,
-                inviteId: inviteData.invite._id
-              }
-            });
-            console.log(`🔔 Notification sent to ${inviteData.invite.invitedBy.name}`);
-          } catch (notificationError) {
-            console.error('Error creating notification:', notificationError);
-            // Don't fail registration if notification fails
-          }
-        } catch (teamError) {
-          console.error('Error adding user to team:', teamError);
-          // Don't fail registration if team addition fails
+          // Notification
+          await Notification.create({
+            user: inviteData.invitedBy._id,
+            type: 'new_message',
+            title: 'Collaborator Joined',
+            message: `${user.name} (${user.email}) accepted your invitation.`,
+            link: '/invite-collaborators',
+            metadata: {
+              collaboratorId: user._id,
+            },
+          });
+        } catch (err) {
+          console.error('Invite post-processing error:', err);
         }
       }
 
