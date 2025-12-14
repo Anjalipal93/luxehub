@@ -1,36 +1,74 @@
-const axios = require('axios');
+/**
+ * Backend Test Script: Customer Message Notifications
+ * --------------------------------------------------
+ * This file is ONLY for backend testing.
+ * Do NOT import or use this file in frontend code.
+ */
 
+const axios = require('axios');
+require('dotenv').config();
+
+// =======================
+// Configuration
+// =======================
+const API_BASE_URL =
+  process.env.API_BASE_URL || 'http://localhost:5000';
+
+// =======================
+// Test Function
+// =======================
 async function testMessageNotifications() {
   try {
-    console.log('Testing customer message notification system...');
+    console.log('🚀 Testing customer message notification system...\n');
+    console.log(`🔗 API Base URL: ${API_BASE_URL}\n`);
 
-    // Test receiving a customer message
+    // -----------------------
+    // Test: Receive customer message
+    // -----------------------
+    console.log('1️⃣ Sending test customer message...');
+
     const testMessage = {
       customer: {
         name: 'Test Customer',
         email: 'test@example.com',
-        phone: '+1234567890'
+        phone: '+1234567890',
       },
+      subject: 'Test Message',
       content: 'This is a test message from a customer',
-      subject: 'Test Message'
     };
 
-    const response = await axios.post('http://localhost:5000/api/customer-messages/receive', testMessage);
+    const response = await axios.post(
+      `${API_BASE_URL}/api/customer-messages/receive`,
+      testMessage
+    );
 
-    console.log('✅ Message received successfully:', response.data);
+    console.log('✅ Message received successfully');
+    console.log('Response:', response.data);
 
-    // Check if notifications were created
-    console.log('Checking for notifications...');
+    // -----------------------
+    // Notification note
+    // -----------------------
+    console.log(
+      '\nℹ️ Note: Notification creation depends on backend logic and admin authentication.'
+    );
+    console.log(
+      'ℹ️ To fully test notifications, authenticate and call /api/notifications.'
+    );
 
-    // First, we need to get a token to access the notifications endpoint
-    // For testing purposes, let's assume we have an admin user
-    // In a real test, you'd need to authenticate first
-
-    console.log('Test completed successfully!');
-
+    console.log('\n🎉 Customer message notification test completed!');
   } catch (error) {
-    console.error('❌ Test failed:', error.response?.data || error.message);
+    console.error('\n❌ Test failed');
+
+    if (error.response) {
+      console.error('Status:', error.response.status);
+      console.error('Response:', error.response.data);
+    } else {
+      console.error('Error:', error.message);
+    }
   }
 }
 
+// =======================
+// Run Test
+// =======================
 testMessageNotifications();

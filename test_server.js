@@ -1,32 +1,72 @@
-const axios = require('axios');
+/**
+ * Backend Test Script: Server Health & Endpoint Check
+ * --------------------------------------------------
+ * This file is ONLY for backend testing.
+ * Do NOT import or use this file in frontend code.
+ */
 
+const axios = require('axios');
+require('dotenv').config();
+
+// =======================
+// Configuration
+// =======================
+const API_BASE_URL =
+  process.env.API_BASE_URL || 'http://localhost:5000';
+
+// =======================
+// Test Function
+// =======================
 async function testServer() {
   try {
-    console.log('Testing server endpoints...');
+    console.log('🚀 Testing server endpoints...\n');
+    console.log(`🔗 API Base URL: ${API_BASE_URL}\n`);
 
-    // Test a public endpoint first
+    // -----------------------
+    // Test 1: Public endpoint
+    // -----------------------
+    console.log('1️⃣ Testing public email status endpoint...');
     try {
-      const response = await axios.get('http://localhost:5000/api/communication/email-status');
+      await axios.get(
+        `${API_BASE_URL}/api/communication/email-status`
+      );
       console.log('✅ Server is running and responding');
     } catch (error) {
-      console.log('⚠️ Server may not be running or endpoint requires auth');
+      console.log(
+        '⚠️ Server may not be running or endpoint requires authentication'
+      );
     }
 
-    // Test leaderboard endpoint (will fail due to auth, but should get 401)
+    // -----------------------
+    // Test 2: Leaderboard endpoint (auth expected)
+    // -----------------------
+    console.log('\n2️⃣ Testing leaderboard endpoint...');
     try {
-      const response = await axios.get('http://localhost:5000/api/team-performance');
-      console.log('✅ Leaderboard endpoint exists and responded');
+      await axios.get(
+        `${API_BASE_URL}/api/team-performance`
+      );
+      console.log('✅ Leaderboard endpoint responded');
     } catch (error) {
       if (error.response?.status === 401) {
-        console.log('✅ Leaderboard endpoint exists (401 auth required - expected)');
+        console.log(
+          '✅ Leaderboard endpoint exists (401 auth required – expected)'
+        );
       } else {
-        console.log('❌ Leaderboard endpoint error:', error.response?.status, error.response?.statusText);
+        console.log(
+          '❌ Leaderboard endpoint error:',
+          error.response?.status,
+          error.response?.statusText
+        );
       }
     }
 
+    console.log('\n🎉 Server endpoint tests completed!');
   } catch (error) {
-    console.error('❌ Server test failed:', error.message);
+    console.error('\n❌ Server test failed:', error.message);
   }
 }
 
+// =======================
+// Run Test
+// =======================
 testServer();

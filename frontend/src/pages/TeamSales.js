@@ -54,7 +54,7 @@ import { useAuth } from '../context/AuthContext';
 import moment from 'moment';
 import io from 'socket.io-client';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL ;
 
 export default function TeamSales() {
   const { user } = useAuth();

@@ -31,7 +31,7 @@ import { toast } from 'react-toastify';
 import AIForecastChart from '../components/AIForecastChart';
 import MonthlySalesForecastChart from '../components/MonthlySalesForecastChart';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL ;
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);

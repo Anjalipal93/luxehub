@@ -23,7 +23,7 @@ import {
 import axios from 'axios';
 import moment from 'moment';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export default function NotificationsCenter() {
   const [anchorEl, setAnchorEl] = useState(null);

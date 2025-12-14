@@ -29,7 +29,7 @@ const playMessageSound = () => {
   }
 };
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL ;
 
 const BOT_MESSAGES = {
   welcome: "Hello! Welcome to SmartBiz AI. 👋",

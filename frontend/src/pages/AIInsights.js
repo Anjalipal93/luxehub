@@ -39,7 +39,7 @@ import {
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.REACT_APP_API_URL ;
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444'];
 
