@@ -27,6 +27,7 @@ import ChattingMessages from './pages/ChattingMessages';
 import ProductQRGenerator from './pages/ProductQRGenerator';
 import QRScanResult from './pages/QRScanResult';
 import Email from './pages/Email';
+import ResetPassword from './pages/ResetPassword';
 import Layout from './components/Layout';
 import AIAssistant from './components/AIAssistant';
 
@@ -41,6 +42,7 @@ function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/register" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/qr-scan-result" element={<QRScanResult />} />
             <Route
               path="/"

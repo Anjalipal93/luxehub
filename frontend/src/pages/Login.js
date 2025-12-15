@@ -10,14 +10,23 @@ import {
   Alert,
   InputAdornment,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import {
   Email as EmailIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  LockReset as LockResetIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -27,6 +36,10 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -63,6 +76,34 @@ export default function Login() {
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotSuccess(false);
+    try {
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, {
+        email: forgotEmail.trim(),
+      });
+
+      if (response.data.success) {
+        setForgotSuccess(true);
+        toast.success('Password reset link sent to your email!');
+      } else {
+        toast.error(response.data.message || 'Failed to send reset email');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast.error(error.response?.data?.message || 'Failed to send reset email');
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   return (
@@ -276,7 +317,7 @@ export default function Login() {
                 disabled={loading}
                 sx={{
                   mt: 2,
-                  mb: 3,
+                  mb: 2,
                   py: 1.8,
                   fontSize: '1.1rem',
                   fontWeight: 600,
@@ -300,6 +341,24 @@ export default function Login() {
                 {loading ? '✨ Signing In...' : '🚀 Sign In'}
               </Button>
 
+              <Box textAlign="center" sx={{ mb: 2 }}>
+                <Typography
+                  variant="body2"
+                  onClick={() => setShowForgotPassword(true)}
+                  sx={{
+                    color: 'var(--accent)',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      opacity: 0.8,
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  🔑 Forgot Password?
+                </Typography>
+              </Box>
+
               <Box textAlign="center">
                 <Link to="/register" style={{ textDecoration: 'none' }}>
                   <Typography
@@ -322,6 +381,86 @@ export default function Login() {
           </Paper>
         </Box>
       </Container>
+
+      {/* Forgot Password Dialog */}
+      <Dialog
+        open={showForgotPassword}
+        onClose={() => {
+          setShowForgotPassword(false);
+          setForgotEmail('');
+          setForgotSuccess(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LockResetIcon sx={{ color: 'var(--accent)' }} />
+          Reset Password
+        </DialogTitle>
+        <DialogContent>
+          {forgotSuccess ? (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                Email Sent!
+              </Typography>
+              <Typography variant="body2">
+                If an account with that email exists, a password reset link has been sent to <strong>{forgotEmail}</strong>.
+                Please check your email and click the link to reset your password.
+              </Typography>
+            </Alert>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                Enter your email address and we'll send you a link to reset your password.
+              </Typography>
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                disabled={forgotLoading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: 'var(--accent)' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mt: 1 }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setShowForgotPassword(false);
+              setForgotEmail('');
+              setForgotSuccess(false);
+            }}
+            disabled={forgotLoading}
+          >
+            {forgotSuccess ? 'Close' : 'Cancel'}
+          </Button>
+          {!forgotSuccess && (
+            <Button
+              onClick={handleForgotPassword}
+              variant="contained"
+              disabled={forgotLoading || !forgotEmail.trim()}
+              startIcon={forgotLoading ? <CircularProgress size={20} /> : <LockResetIcon />}
+              sx={{
+                backgroundColor: 'var(--accent)',
+                '&:hover': {
+                  backgroundColor: '#0F8C6A',
+                },
+              }}
+            >
+              {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

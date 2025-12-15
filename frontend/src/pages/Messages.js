@@ -28,7 +28,7 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import moment from 'moment';
 
-const API_URL = process.env.REACT_APP_API_URL ;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 const SOCKET_URL = API_URL.replace('/api', '');
 
 const Messages = () => {
@@ -159,12 +159,51 @@ const Messages = () => {
       setConversations(prev => {
         const existingMessages = prev[otherUserId] || [];
         // Check if message already exists (avoid duplicates)
-        const messageExists = existingMessages.some(m => m.id === msg.id || (m.text === msg.text && Math.abs(new Date(m.timestamp) - new Date(msg.ts)) < 1000));
-        if (messageExists) {
+        const msgTimestamp = msg.timestamp || msg.ts;
+        let messageExists = false;
+        let pendingMessageIndex = -1;
+
+        // Check for existing message or pending message with same text
+        existingMessages.forEach((m, index) => {
+          if (m.id === msg.id) {
+            messageExists = true;
+            return;
+          }
+          // If this is a pending message from the same sender with same text, replace it
+          if (m.isPending && m.isMe === (msgFromId === currentUserId) && m.text === msg.text) {
+            const mTime = new Date(m.timestamp).getTime();
+            const msgTime = new Date(msgTimestamp).getTime();
+            if (Math.abs(mTime - msgTime) < 5000) { // 5 second window
+              pendingMessageIndex = index;
+              messageExists = true;
+            }
+          }
+        });
+
+        if (messageExists && pendingMessageIndex === -1) {
           console.log('Message already exists, skipping');
           return prev;
         }
+
+        // If we found a pending message to replace, replace it
+        if (pendingMessageIndex >= 0) {
+          const newMessages = [...existingMessages];
+          newMessages[pendingMessageIndex] = {
+            id: msg.id,
+            text: msg.text,
+            fromUserId: msgFromId,
+            fromUsername: msg.fromUsername || 'Unknown',
+            timestamp: new Date(msgTimestamp),
+            isMe: msgFromId === currentUserId,
+            isPending: false,
+          };
+          return {
+            ...prev,
+            [otherUserId]: newMessages,
+          };
+        }
         
+        // Otherwise add new message
         return {
           ...prev,
           [otherUserId]: [
@@ -173,8 +212,8 @@ const Messages = () => {
               id: msg.id,
               text: msg.text,
               fromUserId: msgFromId,
-              fromUsername: msg.fromUsername,
-              timestamp: new Date(msg.ts),
+              fromUsername: msg.fromUsername || 'Unknown',
+              timestamp: new Date(msgTimestamp),
               isMe: msgFromId === currentUserId,
               isPending: false,
             },
@@ -207,7 +246,7 @@ const Messages = () => {
     }
   }, [selectedUser]);
 
-  const handleUserSelect = (selectedUserData) => {
+  const handleUserSelect = async (selectedUserData) => {
     console.log('User selected:', selectedUserData);
     if (!selectedUserData) {
       toast.error('Invalid user selected');
@@ -225,6 +264,40 @@ const Messages = () => {
       ...prev,
       [userId]: null,
     }));
+
+    // Load chat history for this user
+    try {
+      const response = await axios.get(`${API_URL}/chat/messages/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      console.log('Loaded chat history:', response.data);
+
+      // Format messages for the conversation
+      const formattedMessages = response.data.map(msg => ({
+        id: msg.id,
+        text: msg.text,
+        fromUserId: String(msg.fromUserId),
+        fromUsername: msg.fromUsername,
+        timestamp: new Date(msg.timestamp || msg.ts),
+        isMe: msg.isMe !== undefined ? msg.isMe : String(msg.fromUserId) === String(user?.id || user?._id),
+        isPending: false,
+      }));
+
+      setConversations(prev => ({
+        ...prev,
+        [userId]: formattedMessages,
+      }));
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+      // Don't show error toast, just start with empty conversation
+      setConversations(prev => ({
+        ...prev,
+        [userId]: prev[userId] || [],
+      }));
+    }
     
     toast.success(`Chatting with ${selectedUserData.name}`);
   };
@@ -317,19 +390,17 @@ const Messages = () => {
 
       console.log('Message emitted to socket');
       setMessage('');
-      toast.success('Message sent!');
+      // Don't show toast here - the message will be confirmed when server responds
       
-      // Remove pending status after message is confirmed (or timeout)
+      // Remove pending message if server doesn't respond within 5 seconds
       setTimeout(() => {
         setConversations(prev => ({
           ...prev,
-          [recipientId]: (prev[recipientId] || []).map(msg => 
-            msg.id === tempMessageId && msg.isPending
-              ? { ...msg, isPending: false }
-              : msg
+          [recipientId]: (prev[recipientId] || []).filter(msg => 
+            !(msg.id === tempMessageId && msg.isPending)
           ),
         }));
-      }, 2000);
+      }, 5000);
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message: ' + error.message);

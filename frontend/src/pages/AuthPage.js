@@ -12,6 +12,11 @@ import {
   IconButton,
   Tab,
   Tabs,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -19,9 +24,11 @@ import {
   Phone as PhoneIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  LockReset as LockResetIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 export default function AuthPage() {
   const location = useLocation();
@@ -43,10 +50,15 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
+
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
   // Update tab when route changes
   useEffect(() => {
@@ -75,36 +87,8 @@ export default function AuthPage() {
       ...prev,
       [field]: event.target.value,
     }));
-
-    // Calculate password strength for signup
-    if (field === 'signupPassword') {
-      calculatePasswordStrength(event.target.value);
-    }
   };
 
-  const calculatePasswordStrength = (password) => {
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[a-z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 15;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 10;
-    setPasswordStrength(strength);
-  };
-
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength < 25) return '#F2C6DE';
-    if (passwordStrength < 50) return '#F2C6DE';
-    if (passwordStrength < 75) return '#D4AF37';
-    return '#D4AF37';
-  };
-
-  const getPasswordStrengthText = () => {
-    if (passwordStrength < 25) return 'Weak';
-    if (passwordStrength < 50) return 'Fair';
-    if (passwordStrength < 75) return 'Good';
-    return 'Strong';
-  };
 
   const validateSignupForm = () => {
     if (!formData.name.trim()) {
@@ -123,8 +107,8 @@ export default function AuthPage() {
       setError('Password is required');
       return false;
     }
-    if (passwordStrength < 50) {
-      setError('Please choose a stronger password');
+    if (formData.signupPassword.length < 6) {
+      setError('Password must be at least 6 characters');
       return false;
     }
     if (formData.signupPassword !== formData.confirmPassword) {
@@ -195,6 +179,34 @@ export default function AuthPage() {
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotSuccess(false);
+    try {
+      const response = await axios.post(`${API_URL}/auth/forgot-password`, {
+        email: forgotEmail.trim(),
+      });
+
+      if (response.data.success) {
+        setForgotSuccess(true);
+        toast.success('Password reset link sent to your email!');
+      } else {
+        toast.error(response.data.message || 'Failed to send reset email');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast.error(error.response?.data?.message || 'Failed to send reset email');
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   return (
@@ -430,6 +442,24 @@ export default function AuthPage() {
                     }}
                     sx={{ mb: 3 }}
                   />
+
+                  <Box textAlign="center" sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      onClick={() => setShowForgotPassword(true)}
+                      sx={{
+                        color: 'var(--accent)',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          opacity: 0.8,
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      🔑 Forgot Password?
+                    </Typography>
+                  </Box>
                 </>
               ) : (
                 // Signup Form
@@ -554,47 +584,31 @@ export default function AuthPage() {
                         </InputAdornment>
                       ),
                       sx: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        backgroundColor: 'var(--bg-primary)',
                         borderRadius: 2,
+                        border: '1px solid var(--border-color)',
                         padding: '8px 12px',
                         margin: '8px 0',
+                        '&:hover': {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--accent)',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--accent)',
+                          boxShadow: '0 0 0 2px rgba(16, 163, 127, 0.2)',
+                        },
                       },
                     }}
                     InputLabelProps={{
                       sx: {
-                        color: 'var(--text-primary)',
+                        color: 'var(--text-secondary)',
                         '&.Mui-focused': { color: 'var(--accent)' },
                       },
                     }}
+                    sx={{ mb: 2, mt: 2 }}
                   />
 
-                  {formData.signupPassword && (
-                    <Box sx={{ mt: 1, mb: 2 }}>
-                      <Typography variant="body2" sx={{ color: '#5A3E36', mb: 0.5 }}>
-                        Password Strength: {getPasswordStrengthText()}
-                      </Typography>
-                      <Box
-                        sx={{
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor: '#F2C6DE',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            height: '100%',
-                            width: `${passwordStrength}%`,
-                            backgroundColor: getPasswordStrengthColor(),
-                            transition: 'width 0.3s ease',
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="caption" sx={{ color: '#5A3E36', mt: 0.5 }}>
-                        Use 8+ characters with uppercase, lowercase, numbers, and symbols
-                      </Typography>
-                    </Box>
-                  )}
 
                   <TextField
                     margin="normal"
@@ -619,15 +633,25 @@ export default function AuthPage() {
                         </InputAdornment>
                       ),
                       sx: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        backgroundColor: 'var(--bg-primary)',
                         borderRadius: 2,
+                        border: '1px solid var(--border-color)',
                         padding: '8px 12px',
                         margin: '8px 0',
+                        '&:hover': {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--accent)',
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--accent)',
+                          boxShadow: '0 0 0 2px rgba(16, 163, 127, 0.2)',
+                        },
                       },
                     }}
                     InputLabelProps={{
                       sx: {
-                        color: 'var(--text-primary)',
+                        color: 'var(--text-secondary)',
                         '&.Mui-focused': { color: 'var(--accent)' },
                       },
                     }}
@@ -672,6 +696,86 @@ export default function AuthPage() {
           </Paper>
         </Box>
       </Container>
+
+      {/* Forgot Password Dialog */}
+      <Dialog
+        open={showForgotPassword}
+        onClose={() => {
+          setShowForgotPassword(false);
+          setForgotEmail('');
+          setForgotSuccess(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LockResetIcon sx={{ color: 'var(--accent)' }} />
+          Reset Password
+        </DialogTitle>
+        <DialogContent>
+          {forgotSuccess ? (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                Email Sent!
+              </Typography>
+              <Typography variant="body2">
+                If an account with that email exists, a password reset link has been sent to <strong>{forgotEmail}</strong>.
+                Please check your email and click the link to reset your password.
+              </Typography>
+            </Alert>
+          ) : (
+            <>
+              <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                Enter your email address and we'll send you a link to reset your password.
+              </Typography>
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                disabled={forgotLoading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon sx={{ color: 'var(--accent)' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mt: 1 }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setShowForgotPassword(false);
+              setForgotEmail('');
+              setForgotSuccess(false);
+            }}
+            disabled={forgotLoading}
+          >
+            {forgotSuccess ? 'Close' : 'Cancel'}
+          </Button>
+          {!forgotSuccess && (
+            <Button
+              onClick={handleForgotPassword}
+              variant="contained"
+              disabled={forgotLoading || !forgotEmail.trim()}
+              startIcon={forgotLoading ? <CircularProgress size={20} /> : <LockResetIcon />}
+              sx={{
+                backgroundColor: 'var(--accent)',
+                '&:hover': {
+                  backgroundColor: '#0F8C6A',
+                },
+              }}
+            >
+              {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

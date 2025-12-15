@@ -9,15 +9,17 @@
    - Select the repository and branch
 
 2. **Configure Build Settings**
+   - Root Directory: `backend`
    - Build Command: `npm install`
-   - Start Command: `node backend/server.js`
+   - Start Command: `node server.js`
    - Environment: Node
 
 3. **Set Environment Variables**
    ```
    PORT=5000
+   NODE_ENV=production
    MONGODB_URI=your-mongodb-atlas-connection-string
-   JWT_SECRET=your-secret-key
+   JWT_SECRET=your-secure-jwt-secret-key-here
    CLIENT_URL=https://your-frontend-domain.vercel.app
    SMTP_HOST=smtp.gmail.com
    SMTP_PORT=587
@@ -39,8 +41,8 @@
    - Select the repository
 
 2. **Configure Service**
-   - Root Directory: Leave empty (or set to project root)
-   - Start Command: `node backend/server.js`
+   - Root Directory: `backend`
+   - Start Command: `node server.js`
    - Build Command: `npm install`
 
 3. **Add Environment Variables**

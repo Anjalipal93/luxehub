@@ -9,6 +9,7 @@
   --light-text-primary: #1A1A1A;
   --light-text-secondary: #666666;
   --light-text-muted: #999999;
+  --light-text-main: #1A1A1A;
   --light-border: #CCCCCC;
   --light-accent: #007ACC;
 
@@ -19,6 +20,7 @@
   --dark-text-primary: #FFFFFF;
   --dark-text-secondary: #C8C8C8;
   --dark-text-muted: #888888;
+  --dark-text-main: #FFFFFF;
   --dark-border: #2A2A2A;
   --dark-accent: #10A37F;
 }
@@ -31,6 +33,7 @@
   --text-primary: var(--light-text-primary);
   --text-secondary: var(--light-text-secondary);
   --text-muted: var(--light-text-muted);
+  --text-main: var(--light-text-main);
   --border-color: var(--light-border);
   --accent: var(--light-accent);
 }
@@ -43,6 +46,7 @@
   --text-primary: var(--dark-text-primary);
   --text-secondary: var(--dark-text-secondary);
   --text-muted: var(--dark-text-muted);
+  --text-main: var(--dark-text-main);
   --border-color: var(--dark-border);
   --accent: var(--dark-accent);
 }
@@ -55,6 +59,7 @@
   --text-primary: #1A1A1A;
   --text-secondary: #666666;
   --text-muted: #999999;
+  --text-main: #1A1A1A;
   --border-color: #CCCCCC;
   --accent: #007ACC;
 }

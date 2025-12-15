@@ -365,6 +365,7 @@ router.get('/my', auth, async (req, res) => {
   try {
     const sales = await Sale.find({ soldBy: req.user._id })
       .populate('soldBy', 'name email')
+      .populate('items.product', 'name category brand price')
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -374,7 +375,9 @@ router.get('/my', auth, async (req, res) => {
       customerName: sale.customerName || 'N/A',
       amount: sale.totalAmount,
       date: sale.createdAt,
-      createdAt: sale.createdAt
+      createdAt: sale.createdAt,
+      items: sale.items || [],
+      itemCount: sale.items?.length || 0
     }));
 
     res.json({

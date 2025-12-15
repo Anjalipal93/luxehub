@@ -72,6 +72,13 @@ export default function TeamSales() {
   const [memberName, setMemberName] = useState('');
   const [memberEmail, setMemberEmail] = useState('');
   const [addingMember, setAddingMember] = useState(false);
+  
+  // Product selection state
+  const [products, setProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   // Team Chat state
   const [activeTab, setActiveTab] = useState(0);
@@ -87,6 +94,8 @@ export default function TeamSales() {
   useEffect(() => {
     fetchMySales();
     fetchTeamData();
+    fetchProducts();
+    fetchAnalytics();
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
@@ -266,6 +275,114 @@ export default function TeamSales() {
     }
   };
 
+  const fetchProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const response = await axios.get(`${API_URL}/products`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setProducts(response.data || []);
+    } catch (error) {
+      console.error('Fetch products error:', error);
+      toast.error('Failed to load products');
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const [revenueResponse, topProductsResponse] = await Promise.all([
+        axios.get(`${API_URL}/sales/stats/revenue?period=month`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }),
+        axios.get(`${API_URL}/sales/stats/top-products?limit=5`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        }),
+      ]);
+
+      setAnalytics({
+        revenue: revenueResponse.data,
+        topProducts: topProductsResponse.data || [],
+      });
+    } catch (error) {
+      console.error('Fetch analytics error:', error);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const handleAddProduct = (product) => {
+    const existingIndex = selectedProducts.findIndex(p => p.productId === product._id);
+    if (existingIndex >= 0) {
+      // Update quantity
+      const updated = [...selectedProducts];
+      updated[existingIndex].quantity += 1;
+      if (updated[existingIndex].quantity > product.quantity) {
+        toast.error(`Only ${product.quantity} units available`);
+        return;
+      }
+      updated[existingIndex].subtotal = updated[existingIndex].quantity * updated[existingIndex].price;
+      setSelectedProducts(updated);
+    } else {
+      // Add new product
+      if (product.quantity <= 0) {
+        toast.error('Product is out of stock');
+        return;
+      }
+      setSelectedProducts([
+        ...selectedProducts,
+        {
+          productId: product._id,
+          productName: product.name,
+          price: product.price,
+          quantity: 1,
+          subtotal: product.price,
+          availableStock: product.quantity,
+        },
+      ]);
+    }
+    // Update total amount
+    updateTotalAmount();
+  };
+
+  const handleRemoveProduct = (productId) => {
+    setSelectedProducts(selectedProducts.filter(p => p.productId !== productId));
+    updateTotalAmount();
+  };
+
+  const handleUpdateQuantity = (productId, newQuantity) => {
+    const product = selectedProducts.find(p => p.productId === productId);
+    if (!product) return;
+
+    const numQuantity = parseInt(newQuantity) || 0;
+    if (numQuantity <= 0) {
+      handleRemoveProduct(productId);
+      return;
+    }
+
+    if (numQuantity > product.availableStock) {
+      toast.error(`Only ${product.availableStock} units available`);
+      return;
+    }
+
+    const updated = selectedProducts.map(p =>
+      p.productId === productId
+        ? { ...p, quantity: numQuantity, subtotal: numQuantity * p.price }
+        : p
+    );
+    setSelectedProducts(updated);
+    updateTotalAmount();
+  };
+
+  const updateTotalAmount = () => {
+    const total = selectedProducts.reduce((sum, p) => sum + p.subtotal, 0);
+    setSaleAmount(total.toFixed(2));
+  };
+
   const handleAddSale = async (e) => {
     e.preventDefault();
 
@@ -274,30 +391,44 @@ export default function TeamSales() {
       return;
     }
 
-    if (!saleAmount || parseFloat(saleAmount) <= 0) {
-      toast.error('Please enter a valid sale amount');
+    if (selectedProducts.length === 0) {
+      toast.error('Please select at least one product');
       return;
     }
 
     setAdding(true);
     try {
-      const response = await axios.post(`${API_URL}/sales/add`, {
+      const items = selectedProducts.map(p => ({
+        product: p.productId,
+        quantity: p.quantity,
+        price: p.price,
+      }));
+
+      const response = await axios.post(`${API_URL}/sales`, {
+        items,
         customerName: customerName.trim(),
-        amount: parseFloat(saleAmount),
+        paymentMethod: 'cash',
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
 
-      if (response.data.success) {
+      if (response.data) {
         toast.success('Sale added successfully!');
         setCustomerName('');
         setSaleAmount('');
+        setSelectedProducts([]);
         fetchMySales();
-        fetchTeamData(); // Refresh team stats
+        fetchTeamData();
+        fetchProducts(); // Refresh products to update stock
+        fetchAnalytics(); // Refresh analytics
       } else {
-        toast.error(response.data.message || 'Failed to add sale');
+        toast.error('Failed to add sale');
       }
     } catch (error) {
       console.error('Add sale error:', error);
-      toast.error(error.response?.data?.message || 'Failed to add sale');
+      toast.error(error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Failed to add sale');
     } finally {
       setAdding(false);
     }
@@ -667,38 +798,252 @@ export default function TeamSales() {
           Add Sale
         </Typography>
         <Box component="form" onSubmit={handleAddSale}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-            <TextField
-              label="Customer Name"
-              placeholder="Enter customer name"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              required
-              disabled={adding}
-              sx={{ flexGrow: 1 }}
-            />
-            <TextField
-              label="Sale Amount"
-              placeholder="0.00"
-              type="number"
-              value={saleAmount}
-              onChange={(e) => setSaleAmount(e.target.value)}
-              required
-              disabled={adding}
-              inputProps={{ min: 0, step: 0.01 }}
-              sx={{ flexGrow: 1 }}
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              startIcon={adding ? <CircularProgress size={20} /> : <AddIcon />}
-              disabled={adding || !customerName.trim() || !saleAmount}
-              sx={{ minWidth: 150, height: '56px' }}
-            >
-              {adding ? 'Adding...' : 'Add Sale'}
-            </Button>
-          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Customer Name"
+                placeholder="Enter customer name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                required
+                disabled={adding}
+              />
+            </Grid>
+
+            {/* Product Selection */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Select Products
+              </Typography>
+              {loadingProducts ? (
+                <Box display="flex" justifyContent="center" p={2}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : products.length === 0 ? (
+                <Alert severity="info">
+                  No products available. Please add products first.
+                </Alert>
+              ) : (
+                <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 1, p: 1 }}>
+                  {products.map((product) => (
+                    <Box
+                      key={product._id}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 1,
+                        mb: 0.5,
+                        bgcolor: selectedProducts.find(p => p.productId === product._id) ? 'rgba(25, 211, 102, 0.1)' : 'transparent',
+                        borderRadius: 1,
+                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.05)' },
+                      }}
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {product.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          ${product.price.toFixed(2)} • Stock: {product.quantity}
+                        </Typography>
+                      </Box>
+                      <Button
+                        size="small"
+                        variant={selectedProducts.find(p => p.productId === product._id) ? 'contained' : 'outlined'}
+                        onClick={() => handleAddProduct(product)}
+                        disabled={product.quantity <= 0 || adding}
+                        sx={{ ml: 2 }}
+                      >
+                        {selectedProducts.find(p => p.productId === product._id) ? 'Added' : 'Add'}
+                      </Button>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Grid>
+
+            {/* Selected Products */}
+            {selectedProducts.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  Selected Products
+                </Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Product</TableCell>
+                        <TableCell align="right">Price</TableCell>
+                        <TableCell align="center">Quantity</TableCell>
+                        <TableCell align="right">Subtotal</TableCell>
+                        <TableCell align="center">Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedProducts.map((item) => (
+                        <TableRow key={item.productId}>
+                          <TableCell>{item.productName}</TableCell>
+                          <TableCell align="right">${item.price.toFixed(2)}</TableCell>
+                          <TableCell align="center">
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdateQuantity(item.productId, e.target.value)}
+                              inputProps={{ min: 1, max: item.availableStock }}
+                              sx={{ width: 80 }}
+                              disabled={adding}
+                            />
+                          </TableCell>
+                          <TableCell align="right">${item.subtotal.toFixed(2)}</TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveProduct(item.productId)}
+                              disabled={adding}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell colSpan={3} sx={{ fontWeight: 700 }}>
+                          Total Amount:
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                          ${parseFloat(saleAmount || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell></TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setSelectedProducts([]);
+                    setSaleAmount('');
+                    setCustomerName('');
+                  }}
+                  disabled={adding}
+                >
+                  Clear
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  startIcon={adding ? <CircularProgress size={20} /> : <AddIcon />}
+                  disabled={adding || !customerName.trim() || selectedProducts.length === 0}
+                  sx={{ minWidth: 150 }}
+                >
+                  {adding ? 'Adding...' : 'Add Sale'}
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
         </Box>
+      </Paper>
+
+      {/* Analytics Section */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          📊 Sales Analytics
+        </Typography>
+        {loadingAnalytics ? (
+          <Box display="flex" justifyContent="center" p={4}>
+            <CircularProgress />
+          </Box>
+        ) : analytics ? (
+          <Grid container spacing={3}>
+            {/* Revenue Stats */}
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Total Revenue (This Month)
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
+                    ${(analytics.revenue?.totalRevenue || 0).toFixed(2)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {analytics.revenue?.totalSales || 0} sales
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Average Sale
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    ${(analytics.revenue?.averageSale || 0).toFixed(2)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Total Sales Count
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {analytics.revenue?.totalSales || 0}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Top Products */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Top Selling Products
+              </Typography>
+              {analytics.topProducts && analytics.topProducts.length > 0 ? (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Product Name</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity Sold</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Revenue</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {analytics.topProducts.map((product, index) => (
+                        <TableRow key={product.productId || index}>
+                          <TableCell>{product.productName || 'N/A'}</TableCell>
+                          <TableCell>{product.category || 'N/A'}</TableCell>
+                          <TableCell align="right">{product.totalQuantity || 0}</TableCell>
+                          <TableCell align="right">
+                            ${(product.totalRevenue || 0).toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Alert severity="info">No product sales data available yet.</Alert>
+              )}
+            </Grid>
+          </Grid>
+        ) : (
+          <Alert severity="info">Analytics data will appear here once you have sales.</Alert>
+        )}
       </Paper>
 
       {/* Team Tabs */}
@@ -762,7 +1107,8 @@ export default function TeamSales() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Customer Name</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Products</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="right">Amount</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
                     </TableRow>
                   </TableHead>
@@ -770,7 +1116,29 @@ export default function TeamSales() {
                     {mySales.map((sale, index) => (
                       <TableRow key={sale._id || sale.id || index}>
                         <TableCell>{sale.customerName || sale.customer || '-'}</TableCell>
-                        <TableCell>${parseFloat(sale.amount || sale.totalAmount || 0).toFixed(2)}</TableCell>
+                        <TableCell>
+                          {sale.items && sale.items.length > 0 ? (
+                            <Box>
+                              {sale.items.slice(0, 2).map((item, idx) => (
+                                <Typography key={idx} variant="body2">
+                                  {item.product?.name || 'Product'} × {item.quantity}
+                                </Typography>
+                              ))}
+                              {sale.items.length > 2 && (
+                                <Typography variant="caption" color="text.secondary">
+                                  +{sale.items.length - 2} more
+                                </Typography>
+                              )}
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              {sale.itemCount || 0} item(s)
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          ${parseFloat(sale.amount || sale.totalAmount || 0).toFixed(2)}
+                        </TableCell>
                         <TableCell>
                           {sale.date
                             ? moment(sale.date).format('MMM DD, YYYY')
