@@ -103,7 +103,7 @@ NODE_ENV=development
 PORT=5000
 JWT_SECRET=your-local-jwt-secret
 MONGODB_URI=mongodb://localhost:27017/business-automation
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://luxehub-7.onrender.com
 ```
 
 ### frontend/.env

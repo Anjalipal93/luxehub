@@ -145,7 +145,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-this
 
 # Server Configuration
 PORT=5000
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://luxehub-7.onrender.com
 
 # Email Configuration - Option 1: OAuth2 (Recommended)
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com

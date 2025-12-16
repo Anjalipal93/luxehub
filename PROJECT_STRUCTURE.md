@@ -159,7 +159,7 @@ ai-powered-automation-business/
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/ai-automation
 JWT_SECRET=your-secret-key
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://luxehub-7.onrender.com
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com

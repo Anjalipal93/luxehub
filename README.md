@@ -69,7 +69,7 @@ Create a `backend/.env` file with the following variables:
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/ai-automation
 JWT_SECRET=your-secret-key
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://luxehub-7.onrender.com
 
 # Optional: Email (Nodemailer)
 SMTP_HOST=smtp.gmail.com

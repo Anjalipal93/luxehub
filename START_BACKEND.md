@@ -68,7 +68,7 @@ Make sure `backend/.env` file exists with at minimum:
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/business-automation
 JWT_SECRET=your-secret-key-here
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://luxehub-7.onrender.com
 ```
 
 ## Verify Server is Running
@@ -86,5 +86,5 @@ npm run dev
 
 This will start:
 - Backend on http://localhost:5000
-- Frontend on http://localhost:3000
+- Frontend on https://luxehub-7.onrender.com
 

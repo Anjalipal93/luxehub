@@ -24,8 +24,8 @@ npm run client
 
 ## Step 3: Test the Application
 
-1. Open your browser and go to: http://localhost:3000
-2. Navigate to: http://localhost:3000/register
+1. Open your browser and go to: https://luxehub-7.onrender.com
+2. Navigate to: https://luxehub-7.onrender.com/register
 3. Fill in the registration form:
    - Full Name: Test User
    - Email: test@example.com
@@ -38,7 +38,7 @@ npm run client
 ## Step 4: Test Login
 
 1. Logout (if logged in)
-2. Go to: http://localhost:3000/login
+2. Go to: https://luxehub-7.onrender.com/login
 3. Enter:
    - Email: test@example.com
    - Password: Test123!@#

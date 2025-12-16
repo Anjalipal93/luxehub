@@ -23,7 +23,7 @@ if (-not (Test-Path "backend\.env")) {
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/business-automation
 JWT_SECRET=your-secret-key-change-this-in-production
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=https://luxehub-7.onrender.com
 "@ | Out-File -FilePath "backend\.env" -Encoding UTF8
     Write-Host "Created backend\.env file. Please update it with your settings." -ForegroundColor Yellow
 }

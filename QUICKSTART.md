@@ -78,12 +78,12 @@ npm run client
 
 ### 5. Access the Application
 
-- Frontend: http://localhost:3000
+- Frontend: https://luxehub-7.onrender.com
 - Backend API: http://localhost:5000/api
 
 ### 6. Create First Admin User
 
-1. Go to http://localhost:3000/register
+1. Go to https://luxehub-7.onrender.com/register
 2. Register a new user
 3. In MongoDB, update the user's role to 'admin':
    ```javascript
@@ -153,7 +153,7 @@ npm run client
 
 ### CORS Errors
 - Ensure CLIENT_URL in backend/.env matches frontend URL
-- Default: http://localhost:3000
+- Default: https://luxehub-7.onrender.com
 
 ### Module Not Found
 - Run `npm install` in both root and frontend directories

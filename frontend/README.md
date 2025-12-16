@@ -25,7 +25,7 @@ REACT_APP_SOCKET_URL=http://localhost:5000
 npm start
 ```
 
-The app will open at http://localhost:3000
+The app will open at https://luxehub-7.onrender.com
 
 ## Features
 

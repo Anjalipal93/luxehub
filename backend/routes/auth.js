@@ -215,7 +215,7 @@ router.post('/forgot-password', [
     await user.save();
 
     // Create reset URL
-    const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+    const resetUrl = `${process.env.CLIENT_URL || 'https://luxehub-7.onrender.com'}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
 
     // Send email
     const emailSubject = 'Password Reset Request';

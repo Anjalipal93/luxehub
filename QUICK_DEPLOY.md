@@ -63,3 +63,6 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 Copy the output and use as `JWT_SECRET`
 
+
+
+

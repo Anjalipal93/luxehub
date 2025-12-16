@@ -108,7 +108,7 @@ router.post(
           console.log('Email transporter verified successfully');
 
           // Create invitation link (you can customize this)
-          const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/register?invite=${newInvite.token}`;
+          const inviteLink = `${process.env.CLIENT_URL || 'https://luxehub-7.onrender.com'}/register?invite=${newInvite.token}`;
 
           const mailOptions = {
             from: emailUser,
