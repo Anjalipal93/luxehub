@@ -13,19 +13,31 @@ const router = express.Router();
 // @access  Private
 router.get('/stats', auth, async (req, res) => {
   try {
+    const userId = req.user._id;
+    const ownerId = req.user.ownerId || req.user._id;
+    
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfDay = new Date(now.setHours(0, 0, 0, 0));
 
+    // Build sales query based on user role
+    // For employees: show only their sales. For owners/admins: show all team sales
+    const salesQuery = req.user.role === 'employee' 
+      ? { soldBy: userId, status: 'completed' }
+      : { ownerId, status: 'completed' };
+    
+    const salesQueryMonthly = { ...salesQuery, createdAt: { $gte: startOfMonth } };
+    const salesQueryDaily = { ...salesQuery, createdAt: { $gte: startOfDay } };
+
     // Total sales
-    const totalSales = await Sale.countDocuments();
-    const monthlySales = await Sale.countDocuments({ createdAt: { $gte: startOfMonth } });
-    const dailySales = await Sale.countDocuments({ createdAt: { $gte: startOfDay } });
+    const totalSales = await Sale.countDocuments(salesQuery);
+    const monthlySales = await Sale.countDocuments(salesQueryMonthly);
+    const dailySales = await Sale.countDocuments(salesQueryDaily);
 
     // Revenue
     const revenueStats = await Sale.aggregate([
       {
-        $match: { status: 'completed' }
+        $match: salesQuery
       },
       {
         $group: {
@@ -59,18 +71,39 @@ router.get('/stats', auth, async (req, res) => {
       dailyRevenue: 0
     };
 
-    // Products
-    const totalProducts = await Product.countDocuments();
-    const lowStockProducts = await Product.countDocuments({ lowStockAlert: true });
-    const activeProducts = await Product.countDocuments({ isActive: true });
+    // Products - filter by user
+    const productsQuery = req.user.role === 'employee' 
+      ? { userId }
+      : { userId: ownerId };
+    
+    const totalProducts = await Product.countDocuments(productsQuery);
+    const lowStockProducts = await Product.countDocuments({ ...productsQuery, lowStockAlert: true });
+    const activeProducts = await Product.countDocuments({ ...productsQuery, isActive: true });
 
-    // Users
-    const totalUsers = await User.countDocuments();
-    const activeUsers = await User.countDocuments({ isActive: true });
+    // Users - only show team members for owners, or just self for employees
+    let usersQuery = {};
+    if (req.user.role === 'employee') {
+      usersQuery = { _id: userId };
+    } else {
+      usersQuery = { 
+        $or: [
+          { ownerId },
+          { _id: ownerId }
+        ]
+      };
+    }
+    
+    const totalUsers = await User.countDocuments(usersQuery);
+    const activeUsers = await User.countDocuments({ ...usersQuery, isActive: true });
 
-    // Messages
-    const totalMessages = await Message.countDocuments();
+    // Messages - filter by user
+    const messagesQuery = req.user.role === 'employee'
+      ? { sentBy: userId }
+      : { ownerId };
+    
+    const totalMessages = await Message.countDocuments(messagesQuery);
     const recentMessages = await Message.countDocuments({
+      ...messagesQuery,
       createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
     });
 
@@ -119,6 +152,9 @@ router.get('/stats', auth, async (req, res) => {
 // @access  Private
 router.get('/charts/sales', auth, async (req, res) => {
   try {
+    const userId = req.user._id;
+    const ownerId = req.user.ownerId || req.user._id;
+    
     const { period = 'month' } = req.query;
     const now = new Date();
     let startDate, groupFormat;
@@ -145,12 +181,22 @@ router.get('/charts/sales', auth, async (req, res) => {
         groupFormat = { day: { $dayOfMonth: '$createdAt' }, month: { $month: '$createdAt' } };
     }
 
-    const chartData = await Sale.aggregate([
-      {
-        $match: {
+    // Build match query based on user role
+    const matchQuery = req.user.role === 'employee'
+      ? {
+          soldBy: userId,
           createdAt: { $gte: startDate },
           status: 'completed'
         }
+      : {
+          ownerId,
+          createdAt: { $gte: startDate },
+          status: 'completed'
+        };
+
+    const chartData = await Sale.aggregate([
+      {
+        $match: matchQuery
       },
       {
         $group: {
@@ -174,7 +220,18 @@ router.get('/charts/sales', auth, async (req, res) => {
 // @access  Private
 router.get('/charts/products', auth, async (req, res) => {
   try {
+    const userId = req.user._id;
+    const ownerId = req.user.ownerId || req.user._id;
+    
+    // Build match query based on user role
+    const matchQuery = req.user.role === 'employee'
+      ? { userId }
+      : { userId: ownerId };
+    
     const categoryData = await Product.aggregate([
+      {
+        $match: matchQuery
+      },
       {
         $group: {
           _id: '$category',
