@@ -32,7 +32,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 
-const API_URL = process.env.REACT_APP_API_URL ;
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 const PRESET_CATEGORIES = [
   'Clothes',
   'Electrical',

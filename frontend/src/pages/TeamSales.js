@@ -54,7 +54,7 @@ import { useAuth } from '../context/AuthContext';
 import moment from 'moment';
 import io from 'socket.io-client';
 
-const API_URL = process.env.REACT_APP_API_URL ;
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
 export default function TeamSales() {
   const { user } = useAuth();

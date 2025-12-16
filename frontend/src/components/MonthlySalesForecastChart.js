@@ -13,7 +13,7 @@ import { Box, CircularProgress, Alert, Typography } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
 export default function MonthlySalesForecastChart() {
   const [data, setData] = useState([]);

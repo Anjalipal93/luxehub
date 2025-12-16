@@ -29,7 +29,7 @@ const playMessageSound = () => {
   }
 };
 
-const API_URL = process.env.REACT_APP_API_URL ;
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
 const BOT_MESSAGES = {
   welcome: "Hello! Welcome to SmartBiz AI. 👋",

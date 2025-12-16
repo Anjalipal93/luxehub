@@ -12,7 +12,7 @@ import {
 import axios from 'axios';
 import { CircularProgress, Alert, Box } from '@mui/material';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
 export default function AIForecastChart() {
   const [forecastData, setForecastData] = useState([]);

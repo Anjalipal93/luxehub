@@ -23,7 +23,7 @@ import {
 import axios from 'axios';
 import moment from 'moment';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
 export default function NotificationsCenter() {
   const [anchorEl, setAnchorEl] = useState(null);
