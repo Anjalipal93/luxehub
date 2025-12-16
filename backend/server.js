@@ -11,9 +11,19 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production'
-      ? process.env.CLIENT_URL || "*"
-      : ["https://luxehub-7.onrender.com"],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      if (process.env.NODE_ENV === 'production') {
+        // Allow Vercel domains
+        if (origin.includes('.vercel.app') || origin === process.env.CLIENT_URL) {
+          return callback(null, true);
+        }
+        return callback(null, true); // Allow all in production for now
+      } else {
+        return callback(null, true); // Allow all in development
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -32,24 +42,40 @@ const MAX_HISTORY = 200;
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
       if (process.env.NODE_ENV === 'production') {
-        const allowedOrigins = [
-          process.env.CLIENT_URL,
-          process.env.CLIENT_URL?.replace('https://', 'http://'),
-        ].filter(Boolean);
-
-        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        // Allow Vercel domains (including preview deployments)
+        if (origin.includes('.vercel.app')) {
           return callback(null, true);
-        } else {
-          return callback(new Error(`CORS blocked: ${origin}`));
         }
+        
+        // Allow specific CLIENT_URL if set
+        if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
+          return callback(null, true);
+        }
+        
+        // Allow Render frontend if it matches
+        if (origin.includes('luxehub') && origin.includes('onrender.com')) {
+          return callback(null, true);
+        }
+        
+        // For now, allow all origins in production (you can restrict this later)
+        return callback(null, true);
       } else {
-        const allowedOrigins = ["https://luxehub-7.onrender.com"];
-        return allowedOrigins.includes(origin)
-          ? callback(null, true)
-          : callback(new Error(`CORS blocked: ${origin}`));
+        // In development, allow localhost and common dev URLs
+        const allowedOrigins = [
+          "http://localhost:3000",
+          "http://localhost:3001",
+          "https://luxehub-7.onrender.com"
+        ];
+        
+        if (allowedOrigins.includes(origin) || origin.includes('.vercel.app')) {
+          return callback(null, true);
+        }
+        
+        return callback(new Error(`CORS blocked: ${origin}`));
       }
     },
     credentials: true,
