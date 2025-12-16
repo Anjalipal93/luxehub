@@ -244,7 +244,7 @@ export default function Sales() {
                   Total Revenue
                 </Typography>
                 <Typography variant="h5">
-                  ${stats.totalRevenue?.toFixed(2) || '0.00'}
+                  ₹{stats.totalRevenue?.toFixed(2) || '0.00'}
                 </Typography>
               </CardContent>
             </Card>
@@ -266,7 +266,7 @@ export default function Sales() {
                   Average Sale
                 </Typography>
                 <Typography variant="h5">
-                  ${stats.averageSale?.toFixed(2) || '0.00'}
+                  ₹{stats.averageSale?.toFixed(2) || '0.00'}
                 </Typography>
               </CardContent>
             </Card>
@@ -296,7 +296,7 @@ export default function Sales() {
                   {sale.customerName || 'Walk-in'}
                 </TableCell>
                 <TableCell>{sale.items.length}</TableCell>
-                <TableCell>${sale.totalAmount.toFixed(2)}</TableCell>
+                <TableCell>₹{sale.totalAmount.toFixed(2)}</TableCell>
                 <TableCell>
                   <Chip label={sale.paymentMethod} size="small" />
                 </TableCell>
@@ -380,7 +380,7 @@ export default function Sales() {
               Add Item
             </Button>
             <Typography variant="h6" sx={{ mb: 2 }}>
-              Total: ${totalAmount.toFixed(2)}
+              Total: ₹{totalAmount.toFixed(2)}
             </Typography>
             <TextField
               margin="normal"

@@ -167,7 +167,7 @@ router.post('/', auth, [
       user: req.user._id,
       type: 'new_sale',
       title: 'New Sale Recorded',
-      message: `Sale of $${totalAmount.toFixed(2)} has been recorded`,
+      message: `Sale of ₹${totalAmount.toFixed(2)} has been recorded`,
       link: `/sales/${sale._id}`
     });
 

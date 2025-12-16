@@ -845,7 +845,7 @@ export default function TeamSales() {
                           {product.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          ${product.price.toFixed(2)} • Stock: {product.quantity}
+                          ₹{product.price.toFixed(2)} • Stock: {product.quantity}
                         </Typography>
                       </Box>
                       <Button
@@ -884,7 +884,7 @@ export default function TeamSales() {
                       {selectedProducts.map((item) => (
                         <TableRow key={item.productId}>
                           <TableCell>{item.productName}</TableCell>
-                          <TableCell align="right">${item.price.toFixed(2)}</TableCell>
+                          <TableCell align="right">₹{item.price.toFixed(2)}</TableCell>
                           <TableCell align="center">
                             <TextField
                               type="number"
@@ -896,7 +896,7 @@ export default function TeamSales() {
                               disabled={adding}
                             />
                           </TableCell>
-                          <TableCell align="right">${item.subtotal.toFixed(2)}</TableCell>
+                          <TableCell align="right">₹{item.subtotal.toFixed(2)}</TableCell>
                           <TableCell align="center">
                             <IconButton
                               size="small"
@@ -916,7 +916,7 @@ export default function TeamSales() {
                           Total Amount:
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                          ${parseFloat(saleAmount || 0).toFixed(2)}
+                          ₹{parseFloat(saleAmount || 0).toFixed(2)}
                         </TableCell>
                         <TableCell></TableCell>
                       </TableRow>
@@ -973,7 +973,7 @@ export default function TeamSales() {
                     Total Revenue (This Month)
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
-                    ${(analytics.revenue?.totalRevenue || 0).toFixed(2)}
+                    ₹{(analytics.revenue?.totalRevenue || 0).toFixed(2)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     {analytics.revenue?.totalSales || 0} sales
@@ -988,7 +988,7 @@ export default function TeamSales() {
                     Average Sale
                   </Typography>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    ${(analytics.revenue?.averageSale || 0).toFixed(2)}
+                    ₹{(analytics.revenue?.averageSale || 0).toFixed(2)}
                   </Typography>
                 </CardContent>
               </Card>
@@ -1029,7 +1029,7 @@ export default function TeamSales() {
                           <TableCell>{product.category || 'N/A'}</TableCell>
                           <TableCell align="right">{product.totalQuantity || 0}</TableCell>
                           <TableCell align="right">
-                            ${(product.totalRevenue || 0).toFixed(2)}
+                            ₹{(product.totalRevenue || 0).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1137,7 +1137,7 @@ export default function TeamSales() {
                           )}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          ${parseFloat(sale.amount || sale.totalAmount || 0).toFixed(2)}
+                          ₹{parseFloat(sale.amount || sale.totalAmount || 0).toFixed(2)}
                         </TableCell>
                         <TableCell>
                           {sale.date

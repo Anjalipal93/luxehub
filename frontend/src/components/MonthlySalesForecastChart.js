@@ -82,7 +82,7 @@ export default function MonthlySalesForecastChart() {
             dataKey="revenue"
             stroke="#2563EB"
             strokeWidth={3}
-            name="Revenue ($)"
+            name="Revenue (₹)"
             dot={{ r: 3 }}
           />
           <Line

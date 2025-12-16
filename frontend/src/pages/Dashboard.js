@@ -73,7 +73,7 @@ export default function Dashboard() {
   const statCards = [
     {
       title: 'Total Revenue',
-      value: `$${stats?.revenue?.total?.toFixed(2) || '0.00'}`,
+      value: `₹${stats?.revenue?.total?.toFixed(2) || '0.00'}`,
       icon: <TrendingUp />,
       color: 'var(--accent)',
       textColor: '#5A3E36',
@@ -81,7 +81,7 @@ export default function Dashboard() {
     },
     {
       title: 'Monthly Revenue',
-      value: `$${stats?.revenue?.monthly?.toFixed(2) || '0.00'}`,
+      value: `₹${stats?.revenue?.monthly?.toFixed(2) || '0.00'}`,
       icon: <TrendingUp />,
       color: 'var(--accent)',
       textColor: '#5A3E36',
@@ -202,7 +202,7 @@ export default function Dashboard() {
                   dataKey="revenue"
                   stroke="#D4AF37"
                   strokeWidth={3}
-                  name="Revenue ($)" 
+                  name="Revenue (₹)" 
                   dot={{ fill: '#2563EB', r: 4 }}
                 />
                 <Line
