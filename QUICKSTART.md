@@ -40,8 +40,8 @@ cd frontend
 cp .env.example .env
 
 # Edit frontend/.env
-# REACT_APP_API_URL=http://localhost:5000/api
-# REACT_APP_SOCKET_URL=http://localhost:5000
+# REACT_APP_API_URL=https://luxehub-7.onrender.com/api
+# REACT_APP_SOCKET_URL=https://luxehub-7.onrender.com
 cd ..
 ```
 
@@ -79,7 +79,7 @@ npm run client
 ### 5. Access the Application
 
 - Frontend: https://luxehub-7.onrender.com
-- Backend API: http://localhost:5000/api
+- Backend API: https://luxehub-7.onrender.com/api
 
 ### 6. Create First Admin User
 

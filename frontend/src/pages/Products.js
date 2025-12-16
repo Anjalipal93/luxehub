@@ -142,7 +142,7 @@ export default function Products() {
         minThreshold: product.minThreshold,
         unit: product.unit || 'piece',
       });
-      setImagePreview(product.image ? `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${product.image}` : null);
+      setImagePreview(product.image ? `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://luxehub-7.onrender.com'}${product.image}` : null);
       setSelectedImage(null);
     } else {
       setEditingProduct(null);
@@ -398,7 +398,7 @@ export default function Products() {
                       <>
                         <img
                           className="product-image"
-                          src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${product.image}`}
+                          src={`${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://luxehub-7.onrender.com'}${product.image}`}
                           alt={product.name}
                           style={{
                             width: '100%',

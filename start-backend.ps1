@@ -29,7 +29,7 @@ CLIENT_URL=https://luxehub-7.onrender.com
 }
 
 Write-Host ""
-Write-Host "Starting server on http://localhost:5000" -ForegroundColor Cyan
+Write-Host "Starting server on https://luxehub-7.onrender.com" -ForegroundColor Cyan
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
 

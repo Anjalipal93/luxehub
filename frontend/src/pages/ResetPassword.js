@@ -21,7 +21,7 @@ import {
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();

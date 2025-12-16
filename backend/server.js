@@ -13,7 +13,7 @@ const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production'
       ? process.env.CLIENT_URL || "*"
-      : ["https://luxehub-7.onrender.com", "http://localhost:3001"],
+      : ["https://luxehub-7.onrender.com"],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -46,7 +46,7 @@ app.use(
           return callback(new Error(`CORS blocked: ${origin}`));
         }
       } else {
-        const allowedOrigins = ["https://luxehub-7.onrender.com", "http://localhost:3001"];
+        const allowedOrigins = ["https://luxehub-7.onrender.com"];
         return allowedOrigins.includes(origin)
           ? callback(null, true)
           : callback(new Error(`CORS blocked: ${origin}`));

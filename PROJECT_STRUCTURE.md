@@ -171,8 +171,8 @@ TWILIO_WHATSAPP_NUMBER=whatsapp:+14155238886
 
 ### Frontend (.env)
 ```
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_SOCKET_URL=http://localhost:5000
+REACT_APP_API_URL=https://luxehub-7.onrender.com/api
+REACT_APP_SOCKET_URL=https://luxehub-7.onrender.com
 ```
 
 ## API Endpoints Summary

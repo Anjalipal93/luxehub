@@ -16,8 +16,8 @@ cp .env.example .env
 
 3. Update `.env` with your backend URL:
 ```
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_SOCKET_URL=http://localhost:5000
+REACT_APP_API_URL=https://luxehub-7.onrender.com/api
+REACT_APP_SOCKET_URL=https://luxehub-7.onrender.com
 ```
 
 4. Start development server:

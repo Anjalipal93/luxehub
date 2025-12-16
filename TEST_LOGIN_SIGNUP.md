@@ -50,7 +50,7 @@ npm run client
 ### If you see "Unable to connect to server":
 
 1. **Check if backend is running:**
-   - Open: http://localhost:5000
+   - Open: https://luxehub-7.onrender.com
    - You should see a JSON response with server info
 
 2. **Check backend console:**
@@ -74,14 +74,14 @@ You can test the API directly using curl or Postman:
 
 ### Register:
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST https://luxehub-7.onrender.com/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"Test User","email":"test@example.com","password":"Test123!@#","phone":"+1234567890"}'
 ```
 
 ### Login:
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST https://luxehub-7.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"Test123!@#"}'
 ```

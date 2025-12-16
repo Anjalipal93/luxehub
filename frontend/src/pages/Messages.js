@@ -28,7 +28,7 @@ import io from 'socket.io-client';
 import axios from 'axios';
 import moment from 'moment';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 const SOCKET_URL = API_URL.replace('/api', '');
 
 const Messages = () => {

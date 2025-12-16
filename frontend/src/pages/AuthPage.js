@@ -58,7 +58,7 @@ export default function AuthPage() {
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://luxehub-7.onrender.com/api';
 
   // Update tab when route changes
   useEffect(() => {

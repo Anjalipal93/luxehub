@@ -73,9 +73,9 @@ CLIENT_URL=https://luxehub-7.onrender.com
 
 ## Verify Server is Running
 
-1. Open your browser and go to: http://localhost:5000
+1. Open your browser and go to: https://luxehub-7.onrender.com
 2. You should see: "Backend is running successfully!"
-3. Or test the API: http://localhost:5000/api/auth/login (should return an error, but confirms server is running)
+3. Or test the API: https://luxehub-7.onrender.com/api/auth/login (should return an error, but confirms server is running)
 
 ## Running Both Frontend and Backend
 
@@ -85,6 +85,6 @@ npm run dev
 ```
 
 This will start:
-- Backend on http://localhost:5000
+- Backend on https://luxehub-7.onrender.com
 - Frontend on https://luxehub-7.onrender.com
 

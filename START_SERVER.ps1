@@ -3,7 +3,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "   STARTING BACKEND SERVER" -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Server will run on: http://localhost:5000" -ForegroundColor Green
+Write-Host "Server will run on: https://luxehub-7.onrender.com" -ForegroundColor Green
 Write-Host "Keep this window open!" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow

@@ -12,7 +12,7 @@ require('dotenv').config();
 // Configuration
 // =======================
 const API_BASE_URL =
-  process.env.API_BASE_URL || 'http://localhost:5000';
+  process.env.API_BASE_URL || 'https://luxehub-7.onrender.com';
 
 // Test credentials (update if needed)
 const TEST_ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL || 'admin@example.com';

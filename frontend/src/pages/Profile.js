@@ -31,7 +31,7 @@ export default function Profile() {
         phone: res.data.phone || '',
         gender: res.data.gender || 'prefer_not_to_say',
       });
-      setPreview(res.data.avatar ? `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${res.data.avatar}` : null);
+      setPreview(res.data.avatar ? `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://luxehub-7.onrender.com'}${res.data.avatar}` : null);
     } catch (e) {
       console.error('Fetch profile error', e);
       const msg = e.response?.status === 401 ? 'Please login to view your profile' : (e.response?.data?.message || 'Failed to load profile');
@@ -69,7 +69,7 @@ export default function Profile() {
         },
       });
       setProfile(res.data);
-      setPreview(res.data.avatar ? `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000'}${res.data.avatar}` : preview);
+      setPreview(res.data.avatar ? `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'https://luxehub-7.onrender.com'}${res.data.avatar}` : preview);
       toast.success('Profile updated');
     } catch (e) {
       console.error('Save profile error', e);
