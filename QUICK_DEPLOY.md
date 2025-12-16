@@ -66,3 +66,4 @@ Copy the output and use as `JWT_SECRET`
 
 
 
+
