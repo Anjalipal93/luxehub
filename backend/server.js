@@ -305,10 +305,27 @@ app.set('io', io);
       process.env.MONGO_URI ||
       'mongodb://127.0.0.1:27017/ai-automation';
 
-    await mongoose.connect(uri);
+    if (!uri || uri === 'mongodb://127.0.0.1:27017/ai-automation') {
+      console.warn('⚠️ Warning: Using default MongoDB URI. Set MONGODB_URI environment variable for production.');
+    }
+
+    const options = {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    };
+
+    await mongoose.connect(uri, options);
     console.log('✅ MongoDB connected successfully');
+    console.log('📊 Database:', mongoose.connection.name);
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
+    console.error('❌ Error details:', err);
+    
+    // Don't exit the process, but log the error
+    // The app will still start, but database operations will fail
+    if (process.env.NODE_ENV === 'production') {
+      console.error('⚠️ CRITICAL: MongoDB connection failed in production. Registration and other database operations will fail.');
+    }
   }
 })();
 

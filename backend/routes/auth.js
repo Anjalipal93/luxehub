@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
@@ -123,6 +124,24 @@ router.post(
         }
       }
 
+      // Check if JWT_SECRET is set before generating token
+      if (!process.env.JWT_SECRET) {
+        console.error('Registration error: JWT_SECRET is not set');
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Server configuration error. Please contact support.' 
+        });
+      }
+
+      // Check MongoDB connection
+      if (mongoose.connection.readyState !== 1) {
+        console.error('Registration error: MongoDB not connected');
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Database connection error. Please try again later.' 
+        });
+      }
+
       const token = generateToken(user._id);
 
       return res.status(201).json({
@@ -139,7 +158,26 @@ router.post(
       });
     } catch (error) {
       console.error('Registration error:', error);
-      return res.status(500).json({ success: false, message: 'Server error during registration' });
+      console.error('Error stack:', error.stack);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Server error during registration';
+      
+      if (error.name === 'ValidationError') {
+        errorMessage = 'Validation error: ' + Object.values(error.errors).map(e => e.message).join(', ');
+      } else if (error.code === 11000) {
+        errorMessage = 'Email already exists';
+      } else if (error.message && error.message.includes('JWT_SECRET')) {
+        errorMessage = 'Server configuration error. Please contact support.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        message: errorMessage,
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 );
